@@ -1,6 +1,8 @@
 package issuetracker.service.project;
 
 import issuetracker.domain.project.Project;
+import issuetracker.repository.project.ProjectRepository;
+import issuetracker.repository.project.ProjectRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,5 +50,26 @@ class ProjectServiceTest {
         assertTrue(projects.size() >= 2);
         assertTrue(projects.stream().anyMatch(p -> p.getName().equals("project1")));
         assertTrue(projects.stream().anyMatch(p -> p.getName().equals("project2")));
+    }
+
+    @Test
+    @DisplayName("findById: 특정 프로젝트 조회")
+    void findById_특정프로젝트조회() {
+        Project project = projectService.createProject("project1");
+
+        Project foundProject = projectService.findById(project.getId());
+
+        assertEquals(project.getId(), foundProject.getId());
+        assertEquals("project1", foundProject.getName());
+    }
+
+    @Test
+    @DisplayName("findByName: 프로젝트 이름으로 조회")
+    void findByName_프로젝트이름으로조회() {
+        projectService.createProject("project1");
+
+        Project foundProject = projectService.findByName("project1");
+
+        assertEquals("project1", foundProject.getName());
     }
 }
