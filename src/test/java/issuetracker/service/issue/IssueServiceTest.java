@@ -1,7 +1,6 @@
 package issuetracker.service.issue;
 
 import issuetracker.domain.account.Account;
-import issuetracker.domain.account.Role;
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
