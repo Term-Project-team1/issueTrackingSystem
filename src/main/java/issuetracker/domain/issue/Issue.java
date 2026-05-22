@@ -26,4 +26,72 @@ public class Issue {
 
     private LocalDateTime reportedDate;
 
+    public Issue(Long id,
+                 Project project,
+                 String title,
+                 String description,
+                 IssueStatus status,
+                 Priority priority,
+                 Account reporter,
+                 LocalDateTime reportedDate){
+        this.id = id;
+        this.project = project;
+        this.title = title;
+        this.description = description;
+        this.status = status;
+        this.priority = priority;
+        this.reporter = reporter;
+        this.reportedDate = reportedDate;
+    }
+    public Long getId() {
+        return id;
+    }
+
+    public Project getProject() {
+        return project;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public IssueStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(IssueStatus status) {
+        this.status = status;
+    }
+
+    public Priority getPriority() {
+        return priority;
+    }
+
+    public Account getReporter() {
+        return reporter;
+    }
+
+    public Account getAssignee() {
+        return assignee;
+    }
+
+    public void setAssignee(Account assignee) {
+        this.assignee = assignee;
+    }
+
+    public Account getFixer() {
+        return fixer;
+    }
+
+    public void setFixer(Account fixer) {
+        this.fixer = fixer;
+    }
+    public LocalDateTime getReportedDate() {
+        return reportedDate;
+    }
+
 }
