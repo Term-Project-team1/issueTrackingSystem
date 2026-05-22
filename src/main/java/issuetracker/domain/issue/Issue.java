@@ -7,23 +7,14 @@ import java.time.LocalDateTime;
 public class Issue {
 
     private Long id;
-
     private Project project;
-
     private String title;
-
     private String description;
-
     private IssueStatus status;
-
     private Priority priority;
-
     private Account reporter;
-
     private Account assignee;
-
     private Account fixer;
-
     private LocalDateTime reportedDate;
 
     public Issue(Long id,
@@ -43,6 +34,7 @@ public class Issue {
         this.reporter = reporter;
         this.reportedDate = reportedDate;
     }
+
     public Long getId() {
         return id;
     }
@@ -102,6 +94,7 @@ public class Issue {
     public void setFixer(Account fixer) {
         this.fixer = fixer;
     }
+
     public LocalDateTime getReportedDate() {
         return reportedDate;
     }
