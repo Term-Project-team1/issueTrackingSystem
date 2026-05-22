@@ -55,8 +55,16 @@ public class Issue {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public IssueStatus getStatus() {
@@ -69,6 +77,10 @@ public class Issue {
 
     public Priority getPriority() {
         return priority;
+    }
+
+    public void setPriority(Priority priority) {
+        this.priority = priority;
     }
 
     public Account getReporter() {

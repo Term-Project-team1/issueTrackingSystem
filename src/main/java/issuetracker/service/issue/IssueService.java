@@ -15,6 +15,11 @@ public interface IssueService {
 
     Issue viewIssue(Long issueId);
 
+    void updateIssue(Long issueId,
+                     String title,
+                     String description,
+                     Priority priority);
+
     void assignIssue(Long issueId, Account assignee, Account pl);
 
     void markFixed(Long issueId, Account fixer);

@@ -52,6 +52,24 @@ public class IssueServiceImpl implements IssueService {
     }
 
     @Override
+    public void updateIssue(Long issueId,
+                            String title,
+                            String description,
+                            Priority priority) {
+        Issue issue = viewIssue(issueId);
+
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Issue title cannot be empty.");
+        }
+
+        issue.setTitle(title);
+        issue.setDescription(description);
+        issue.setPriority(priority);
+
+        issueRepository.update(issue);
+    }
+
+    @Override
     public void assignIssue(Long issueId, Account assignee, Account pl) {
         Issue issue = viewIssue(issueId);
 

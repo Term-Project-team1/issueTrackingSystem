@@ -171,4 +171,29 @@ class IssueServiceTest {
             issueService.closeIssue(issue.getId(), pl1);
         });
     }
+
+    @Test
+    @DisplayName("updateIssue: title, description, priority를 수정할 수 있다")
+    void updateIssue_title_description_priority_수정되는지() {
+        Issue issue = issueService.createIssue(
+                project1,
+                tester1,
+                "Login bug",
+                "Login fails with valid password",
+                Priority.MAJOR
+        );
+
+        issueService.updateIssue(
+                issue.getId(),
+                "Updated login bug",
+                "Login fails only on Chrome",
+                Priority.CRITICAL
+        );
+
+        Issue updatedIssue = issueService.viewIssue(issue.getId());
+
+        assertEquals("Updated login bug", updatedIssue.getTitle());
+        assertEquals("Login fails only on Chrome", updatedIssue.getDescription());
+        assertEquals(Priority.CRITICAL, updatedIssue.getPriority());
+    }
 }
