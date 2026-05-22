@@ -1,4 +1,5 @@
-package issuetracker.src.main.domain.account;
+package issuetracker.domain.account;
+
 
 public enum Role {
 
