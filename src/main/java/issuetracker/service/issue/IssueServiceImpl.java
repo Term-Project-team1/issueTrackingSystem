@@ -26,7 +26,7 @@ public class IssueServiceImpl implements IssueService {
                              Priority priority) {
 
         if (title == null || title.trim().isEmpty()) {
-            throw new IllegalArgumentException("이슈 제목은 비어 있을 수 없습니다.");
+            throw new IllegalArgumentException("Issue title cannot be empty.");
         }
 
         Long issueId = sequence++;
@@ -48,7 +48,7 @@ public class IssueServiceImpl implements IssueService {
     @Override
     public Issue viewIssue(Long issueId) {
         return issueRepository.findById(issueId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이슈입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("Issue not found."));
     }
 
     @Override
@@ -56,7 +56,7 @@ public class IssueServiceImpl implements IssueService {
         Issue issue = viewIssue(issueId);
 
         if (issue.getStatus() != IssueStatus.NEW) {
-            throw new IllegalStateException("NEW 상태에서만 담당자를 지정할 수 있습니다.");
+            throw new IllegalStateException("Issue can only be assigned from NEW status.");
         }
 
         issue.setAssignee(assignee);
@@ -70,7 +70,7 @@ public class IssueServiceImpl implements IssueService {
         Issue issue = viewIssue(issueId);
 
         if (issue.getStatus() != IssueStatus.ASSIGNED) {
-            throw new IllegalStateException("ASSIGNED 상태에서만 FIXED로 변경할 수 있습니다.");
+            throw new IllegalStateException("Issue can only be marked as FIXED from ASSIGNED status.");
         }
 
         issue.setFixer(fixer);
@@ -84,7 +84,7 @@ public class IssueServiceImpl implements IssueService {
         Issue issue = viewIssue(issueId);
 
         if (issue.getStatus() != IssueStatus.FIXED) {
-            throw new IllegalStateException("FIXED 상태에서만 RESOLVED로 변경할 수 있습니다.");
+            throw new IllegalStateException("Issue can only be resolved from FIXED status.");
         }
 
         issue.setStatus(IssueStatus.RESOLVED);
@@ -97,7 +97,7 @@ public class IssueServiceImpl implements IssueService {
         Issue issue = viewIssue(issueId);
 
         if (issue.getStatus() != IssueStatus.RESOLVED) {
-            throw new IllegalStateException("RESOLVED 상태에서만 CLOSED로 변경할 수 있습니다.");
+            throw new IllegalStateException("Issue can only be closed from RESOLVED status.");
         }
 
         issue.setStatus(IssueStatus.CLOSED);
