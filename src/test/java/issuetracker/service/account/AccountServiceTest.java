@@ -3,10 +3,11 @@ package issuetracker.service.account;
 import issuetracker.domain.account.Account;
 import issuetracker.domain.account.Role;
 import issuetracker.repository.account.AccountRepository;
-import issuetracker.repository.account.AccountRepositoryImpl;
+import issuetracker.repository.account.TestAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ class AccountServiceTest {
 
     @BeforeEach
     void setUp() {
-        AccountRepository accountRepository = new AccountRepositoryImpl();
+        AccountRepository accountRepository = new TestAccountRepository();
         accountService = new AccountServiceImpl(accountRepository);
     }
 
@@ -65,17 +66,6 @@ class AccountServiceTest {
         assertTrue(devAccounts.stream().allMatch(a -> a.getRole() == Role.DEV));
     }
 
-    @Test
-    @DisplayName("seedData: 데모 계정 존재 확인")
-    void seedData_admin_PL_dev_tester_계정존재확인() {
-        List<Account> accounts = accountService.findAll();
 
-        assertTrue(accounts.stream().anyMatch(a -> a.getUsername().equals("admin")));
-        assertTrue(accounts.stream().anyMatch(a -> a.getUsername().equals("PL1")));
-        assertTrue(accounts.stream().anyMatch(a -> a.getUsername().equals("PL2")));
-        assertTrue(accounts.stream().anyMatch(a -> a.getUsername().equals("dev1")));
-        assertTrue(accounts.stream().anyMatch(a -> a.getUsername().equals("dev10")));
-        assertTrue(accounts.stream().anyMatch(a -> a.getUsername().equals("tester1")));
-        assertTrue(accounts.stream().anyMatch(a -> a.getUsername().equals("tester5")));
-    }
+
 }

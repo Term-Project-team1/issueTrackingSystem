@@ -2,7 +2,7 @@ package issuetracker.service.project;
 
 import issuetracker.domain.project.Project;
 import issuetracker.repository.project.ProjectRepository;
-import issuetracker.repository.project.ProjectRepositoryImpl;
+import issuetracker.repository.project.TestProjectRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ class ProjectServiceTest {
 
     @BeforeEach
     void setUp() {
-        ProjectRepository projectRepository = new ProjectRepositoryImpl();
+        ProjectRepository projectRepository = new TestProjectRepository();
         projectService = new ProjectServiceImpl(projectRepository);
     }
 
