@@ -3,32 +3,19 @@ package issuetracker.domain.issue;
 import issuetracker.domain.account.Account;
 import issuetracker.domain.project.Project;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 public class Issue {
 
     private Long id;
-
     private Project project;
-
     private String title;
-
     private String description;
-
     private IssueStatus status;
-
     private Priority priority;
-
     private Account reporter;
-
     private Account assignee;
-
     private Account fixer;
-
     private LocalDateTime reportedDate;
-
-    public Issue() {
-    }
 
     public Issue(Long id,
                  Project project,
@@ -37,9 +24,7 @@ public class Issue {
                  IssueStatus status,
                  Priority priority,
                  Account reporter,
-                 Account assignee,
-                 Account fixer,
-                 LocalDateTime reportedDate) {
+                 LocalDateTime reportedDate){
         this.id = id;
         this.project = project;
         this.title = title;
@@ -47,8 +32,6 @@ public class Issue {
         this.status = status;
         this.priority = priority;
         this.reporter = reporter;
-        this.assignee = assignee;
-        this.fixer = fixer;
         this.reportedDate = reportedDate;
     }
 
@@ -56,16 +39,8 @@ public class Issue {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Project getProject() {
         return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
     }
 
     public String getTitle() {
@@ -104,10 +79,6 @@ public class Issue {
         return reporter;
     }
 
-    public void setReporter(Account reporter) {
-        this.reporter = reporter;
-    }
-
     public Account getAssignee() {
         return assignee;
     }
@@ -128,20 +99,4 @@ public class Issue {
         return reportedDate;
     }
 
-    public void setReportedDate(LocalDateTime reportedDate) {
-        this.reportedDate = reportedDate;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Issue)) return false;
-        Issue issue = (Issue) o;
-        return Objects.equals(id, issue.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 }
