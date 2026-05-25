@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,11 +40,11 @@ class RecommendationServiceTest {
 
     @BeforeEach // 각각의 @Test 메서드가 실행되기 직전마다 매번 새로 실행
     void setUp() {
-        project = new Project(PROJECT_ID, "project1");
+        project = new Project(PROJECT_ID, "project1", LocalDateTime.now());
         issue = new Issue(
                 100L, project, "title", "desc",
                 IssueStatus.NEW, Priority.MAJOR,
-                null, null, null, null
+                null, LocalDateTime.now()
         );
 
         dev1 = new Account(11L, "dev1", Role.DEV);
