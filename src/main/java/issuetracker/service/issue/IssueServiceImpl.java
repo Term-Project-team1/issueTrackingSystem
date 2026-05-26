@@ -14,8 +14,8 @@ public class IssueServiceImpl implements IssueService {
     private final IssueRepository issueRepository;
     private Long sequence = 1L;
 
-    public IssueServiceImpl() {
-        this.issueRepository = new IssueRepository();
+    public IssueServiceImpl(IssueRepository issueRepository) {
+        this.issueRepository = issueRepository;
     }
 
     @Override

@@ -5,13 +5,10 @@ import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
-import issuetracker.service.issue.IssueService;
+import issuetracker.repository.issue.IssueRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import issuetracker.service.issue.IssueServiceImpl;
-
-import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,7 +23,7 @@ class IssueServiceTest {
 
     @BeforeEach
     void setUp() {
-        issueService = new IssueServiceImpl();
+        issueService = new IssueServiceImpl(new IssueRepositoryImpl());
 
         project1 = new Project();
         tester1 = new Account();
