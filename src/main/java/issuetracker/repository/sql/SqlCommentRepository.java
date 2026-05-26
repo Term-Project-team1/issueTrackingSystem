@@ -1,8 +1,11 @@
 package issuetracker.repository.sql;
 
+import issuetracker.domain.account.Account;
+import issuetracker.domain.comment.Comment;
 import issuetracker.repository.comment.CommentRepository;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,14 +21,14 @@ public class SqlCommentRepository implements CommentRepository {
     public Comment save(Comment comment) {
         String sql = "INSERT INTO comment(issue_id, author_id, content, created_date) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setInt(1, comment.getIssueId());
-            pstmt.setInt(2, comment.getAuthorId());
+            pstmt.setLong(1, comment.getIssue().getId());
+            pstmt.setLong(2, comment.getAuthor().getId());
             pstmt.setString(3, comment.getContent());
-            pstmt.setString(4, comment.getCreatedDate());
+            pstmt.setString(4, comment.getCreatedDate().toString());
             pstmt.executeUpdate();
 
             ResultSet keys = pstmt.getGeneratedKeys();
-            if (keys.next()) comment.setId(keys.getInt(1));
+            if (keys.next()) comment.setId(keys.getLong(1));
             return comment;
 
         } catch (SQLException e) {
@@ -34,20 +37,29 @@ public class SqlCommentRepository implements CommentRepository {
     }
 
     @Override
-    public List<Comment> findByIssueId(int issueId) {
-        String sql = "SELECT * FROM comment WHERE issue_id = ? ORDER BY id ASC";
+    public List<Comment> findByIssueId(Long issueId) {
+        String sql = """
+            SELECT c.id, c.content, c.created_date,
+                   a.id as author_id, a.username, a.role
+            FROM comment c
+            JOIN account a ON c.author_id = a.id
+            WHERE c.issue_id = ?
+            ORDER BY c.id ASC
+            """;
         List<Comment> comments = new ArrayList<>();
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, issueId);
+            pstmt.setLong(1, issueId);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                Comment c = new Comment(
-                        rs.getInt("issue_id"),
-                        rs.getInt("author_id"),
-                        rs.getString("content"),
-                        rs.getString("created_date")
-                );
-                c.setId(rs.getInt("id"));
+                Account author = new Account();
+                author.setId(rs.getLong("author_id"));
+                author.setUsername(rs.getString("username"));
+
+                Comment c = new Comment();
+                c.setId(rs.getLong("id"));
+                c.setAuthor(author);
+                c.setContent(rs.getString("content"));
+                c.setCreatedDate(LocalDateTime.parse(rs.getString("created_date").replace(" ", "T")));
                 comments.add(c);
             }
         } catch (SQLException e) {

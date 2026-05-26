@@ -1,10 +1,12 @@
 package issuetracker.repository.issue;
 
+import issuetracker.domain.issue.Issue;
+import issuetracker.domain.issue.IssueStatus;
 import issuetracker.model.IssueFilter;
 import java.util.List;
 import java.util.Optional;
 
 public interface IssueRepository {
-    Optional<Issue1> findById(int issueId);
-    List<Issue1> findByFilter(IssueFilter filter);
+    Optional<Issue> findById(Long issueId);
+    List<Issue> findByFilter(IssueFilter filter);
 }

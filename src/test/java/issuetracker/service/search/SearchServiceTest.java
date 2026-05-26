@@ -1,5 +1,7 @@
 package issuetracker.service.search;
 
+import issuetracker.domain.issue.Issue;
+import issuetracker.domain.issue.IssueStatus;
 import issuetracker.model.IssueFilter;
 import issuetracker.repository.sql.SqlIssueRepository;
 import org.junit.jupiter.api.*;
@@ -19,8 +21,6 @@ class SearchServiceTest {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         createSchema();
         insertTestData();
-
-        // Repository 인터페이스에 의존 (DIP)
         SqlIssueRepository issueRepo = new SqlIssueRepository(connection);
         searchService = new SearchService(issueRepo);
     }
@@ -30,40 +30,39 @@ class SearchServiceTest {
         connection.close();
     }
 
-    // ── 테스트 ─────────────────────────────────────────
-
     @Test
     @DisplayName("status가 NEW인 이슈 조회")
     void searchByStatus_NEW_조회() {
-        List<Issue1> issues = searchService.searchByStatus("NEW");
+        List<Issue> issues = searchService.searchByStatus(IssueStatus.NEW);
 
         assertFalse(issues.isEmpty());
-        assertTrue(issues.stream().allMatch(i -> i.getStatus().equals("NEW")));
+        assertTrue(issues.stream().allMatch(i -> i.getStatus() == IssueStatus.NEW));
     }
 
     @Test
     @DisplayName("assignee가 dev1(id=2)인 이슈 조회")
     void searchByAssignee_dev1_조회() {
-        List<Issue1> issues = searchService.searchByAssignee(2);
+        List<Issue> issues = searchService.searchByAssignee(2L);
 
         assertFalse(issues.isEmpty());
         assertTrue(issues.stream().allMatch(i ->
-                i.getAssigneeId() != null && i.getAssigneeId() == 2));
+                i.getAssignee() != null && i.getAssignee().getId().equals(2L)));
     }
 
     @Test
     @DisplayName("reporter가 tester1(id=1)인 이슈 조회")
     void searchByReporter_tester1_조회() {
-        List<Issue1> issues = searchService.searchByReporter(1);
+        List<Issue> issues = searchService.searchByReporter(1L);
 
         assertFalse(issues.isEmpty());
-        assertTrue(issues.stream().allMatch(i -> i.getReporterId() == 1));
+        assertTrue(issues.stream().allMatch(i ->
+                i.getReporter().getId().equals(1L)));
     }
 
     @Test
-    @DisplayName("키워드로 이슈 검색 (title/description 포함)")
+    @DisplayName("키워드로 이슈 검색")
     void searchByKeyword_기능검색() {
-        List<Issue1> issues = searchService.searchByKeyword("로그인");
+        List<Issue> issues = searchService.searchByKeyword("로그인");
 
         assertFalse(issues.isEmpty());
         assertTrue(issues.stream().anyMatch(i ->
@@ -74,30 +73,30 @@ class SearchServiceTest {
     @Test
     @DisplayName("복합 조건 검색 - status + assignee")
     void searchByFilter_복합조건_결과확인() {
-        IssueFilter filter = new IssueFilter().status("ASSIGNED").assigneeId(2);
-        List<Issue1> issues = searchService.searchByFilter(filter);
+        IssueFilter filter = new IssueFilter()
+                .status(IssueStatus.ASSIGNED)
+                .assigneeId(2L);
+        List<Issue> issues = searchService.searchByFilter(filter);
 
         assertFalse(issues.isEmpty());
         assertTrue(issues.stream().allMatch(i ->
-                i.getStatus().equals("ASSIGNED")
-                        && i.getAssigneeId() != null && i.getAssigneeId() == 2));
+                i.getStatus() == IssueStatus.ASSIGNED
+                        && i.getAssignee() != null && i.getAssignee().getId().equals(2L)));
     }
 
     @Test
     @DisplayName("조건 없으면 전체 반환")
     void searchByFilter_조건없으면_전체반환() {
-        List<Issue1> all = searchService.searchByFilter(new IssueFilter());
+        List<Issue> all = searchService.searchByFilter(new IssueFilter());
         assertFalse(all.isEmpty());
     }
 
     @Test
     @DisplayName("존재하지 않는 상태로 검색하면 빈 리스트")
     void searchByStatus_없는상태_빈리스트() {
-        List<Issue1> issues = searchService.searchByStatus("INVALID_STATUS");
+        List<Issue> issues = searchService.searchByStatus(IssueStatus.CLOSED);
         assertTrue(issues.isEmpty());
     }
-
-    // ── DB 초기화 ───────────────────────────────────────
 
     private void createSchema() throws SQLException {
         Statement stmt = connection.createStatement();
@@ -141,21 +140,18 @@ class SearchServiceTest {
         stmt.executeUpdate("INSERT INTO account(username, role) VALUES ('tester1', 'TESTER')");
         stmt.executeUpdate("INSERT INTO account(username, role) VALUES ('dev1', 'DEV')");
         stmt.executeUpdate("INSERT INTO account(username, role) VALUES ('dev2', 'DEV')");
-        stmt.executeUpdate("INSERT INTO project(name, created_date) VALUES ('project1', '2026-01-01')");
-        // NEW 이슈
+        stmt.executeUpdate("INSERT INTO project(name, created_date) VALUES ('project1', '2026-01-01T00:00:00')");
         stmt.executeUpdate("""
             INSERT INTO issue(project_id, title, description, status, priority, reporter_id, reported_date)
-            VALUES (1, '로그인 버그', '로그인이 안됩니다', 'NEW', 'MAJOR', 1, '2026-05-01')
+            VALUES (1, '로그인 버그', '로그인이 안됩니다', 'NEW', 'MAJOR', 1, '2026-05-01T10:00:00')
             """);
-        // ASSIGNED 이슈 (dev1에게 배정)
         stmt.executeUpdate("""
             INSERT INTO issue(project_id, title, description, status, priority, reporter_id, assignee_id, reported_date)
-            VALUES (1, '회원가입 오류', '이메일 중복 처리 문제', 'ASSIGNED', 'MINOR', 1, 2, '2026-05-02')
+            VALUES (1, '회원가입 오류', '이메일 중복 처리 문제', 'ASSIGNED', 'MINOR', 1, 2, '2026-05-02T10:00:00')
             """);
-        // NEW 이슈 (키워드 검색용)
         stmt.executeUpdate("""
             INSERT INTO issue(project_id, title, description, status, priority, reporter_id, reported_date)
-            VALUES (1, '검색 기능 개선', '키워드 검색이 느립니다', 'NEW', 'CRITICAL', 1, '2026-05-03')
+            VALUES (1, '검색 기능 개선', '키워드 검색이 느립니다', 'NEW', 'CRITICAL', 1, '2026-05-03T10:00:00')
             """);
     }
 }
