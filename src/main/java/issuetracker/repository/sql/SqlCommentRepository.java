@@ -51,15 +51,18 @@ public class SqlCommentRepository implements CommentRepository {
             pstmt.setLong(1, issueId);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                Account author = new Account();
-                author.setId(rs.getLong("author_id"));
-                author.setUsername(rs.getString("username"));
+                Account author = new Account(
+                        rs.getLong("author_id"),
+                        rs.getString("username"),
+                        null
+                );
 
                 Comment c = new Comment();
                 c.setId(rs.getLong("id"));
                 c.setAuthor(author);
                 c.setContent(rs.getString("content"));
-                c.setCreatedDate(LocalDateTime.parse(rs.getString("created_date").replace(" ", "T")));
+                c.setCreatedDate(LocalDateTime.parse(
+                        rs.getString("created_date").replace(" ", "T")));
                 comments.add(c);
             }
         } catch (SQLException e) {

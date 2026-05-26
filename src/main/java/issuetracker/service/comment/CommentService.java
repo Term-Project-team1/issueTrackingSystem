@@ -26,8 +26,8 @@ public class CommentService {
                 .orElseThrow(() -> new IllegalArgumentException("이슈를 찾을 수 없습니다. id=" + issueId));
 
         // author는 Account 객체 필요 — id만 세팅한 껍데기로 저장
-        issuetracker.domain.account.Account author = new issuetracker.domain.account.Account();
-        author.setId(authorId);
+        issuetracker.domain.account.Account author =
+                new issuetracker.domain.account.Account(authorId, null, null);
 
         Comment comment = new Comment();
         comment.setIssue(issue);

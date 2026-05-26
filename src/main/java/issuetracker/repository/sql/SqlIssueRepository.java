@@ -92,37 +92,51 @@ public class SqlIssueRepository implements IssueRepository {
     }
 
     private Issue mapIssue(ResultSet rs) throws SQLException {
-        Account reporter = new Account();
-        reporter.setId(rs.getLong("r_id"));
-        reporter.setUsername(rs.getString("r_username"));
 
-        Project project = new Project();
-        project.setId(rs.getLong("p_id"));
-        project.setName(rs.getString("p_name"));
+        // reporter
+        Account reporter = new Account(
+                rs.getLong("r_id"),
+                rs.getString("r_username"),
+                null
+        );
 
-        Issue issue = new Issue();
-        issue.setId(rs.getLong("id"));
-        issue.setProject(project);
-        issue.setTitle(rs.getString("title"));
-        issue.setDescription(rs.getString("description"));
-        issue.setStatus(IssueStatus.valueOf(rs.getString("status")));
-        issue.setPriority(Priority.valueOf(rs.getString("priority")));
-        issue.setReporter(reporter);
-        issue.setReportedDate(LocalDateTime.parse(
-                rs.getString("reported_date").replace(" ", "T")));
+        Project project = new Project(
+                rs.getLong("p_id"),
+                rs.getString("p_name"),
+                null
+        );
 
+        Issue issue = new Issue(
+                rs.getLong("id"),
+                project,
+                rs.getString("title"),
+                rs.getString("description"),
+                IssueStatus.valueOf(rs.getString("status")),
+                Priority.valueOf(rs.getString("priority")),
+                reporter,
+                LocalDateTime.parse(rs.getString("reported_date").replace(" ", "T"))
+        );
+
+        // assignee
         if (rs.getString("a_username") != null) {
-            Account assignee = new Account();
-            assignee.setId(rs.getLong("a_id"));
-            assignee.setUsername(rs.getString("a_username"));
+            Account assignee = new Account(
+                    rs.getLong("a_id"),
+                    rs.getString("a_username"),
+                    null
+            );
             issue.setAssignee(assignee);
         }
+
+        // fixer
         if (rs.getString("f_username") != null) {
-            Account fixer = new Account();
-            fixer.setId(rs.getLong("f_id"));
-            fixer.setUsername(rs.getString("f_username"));
+            Account fixer = new Account(
+                    rs.getLong("f_id"),
+                    rs.getString("f_username"),
+                    null
+            );
             issue.setFixer(fixer);
         }
+
         return issue;
     }
 }
