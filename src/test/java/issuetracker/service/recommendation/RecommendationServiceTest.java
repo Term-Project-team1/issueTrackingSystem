@@ -56,7 +56,7 @@ class RecommendationServiceTest {
         admin = new Account(41L, "admin", Role.ADMIN);
 
         query = new FakeRecommendationQuery();
-        recommendationService = new RecommendationService(query);
+        recommendationService = new RecommendationServiceImpl(query);
     }
 
     @Test

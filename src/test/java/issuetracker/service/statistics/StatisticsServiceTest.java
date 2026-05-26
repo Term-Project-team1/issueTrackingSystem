@@ -36,7 +36,7 @@ class StatisticsServiceTest {
         tester1 = new Account(21L, "tester1", Role.TESTER);
 
         query = new FakeStatisticsQuery();
-        statisticsService = new StatisticsService(query);
+        statisticsService = new StatisticsServiceImpl(query);
     }
 
     @Test
