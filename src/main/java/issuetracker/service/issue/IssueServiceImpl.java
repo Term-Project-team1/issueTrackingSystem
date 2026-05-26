@@ -6,6 +6,7 @@ import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
 import issuetracker.repository.issue.IssueRepository;
+import issuetracker.repository.issue.IssueRepositoryImpl;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +14,10 @@ public class IssueServiceImpl implements IssueService {
 
     private final IssueRepository issueRepository;
     private Long sequence = 1L;
+
+    public IssueServiceImpl() {
+        this.issueRepository = new IssueRepositoryImpl();
+    }
 
     public IssueServiceImpl(IssueRepository issueRepository) {
         this.issueRepository = issueRepository;
@@ -25,9 +30,7 @@ public class IssueServiceImpl implements IssueService {
                              String description,
                              Priority priority) {
 
-        if (title == null || title.trim().isEmpty()) {
-            throw new IllegalArgumentException("Issue title cannot be empty.");
-        }
+        validateTitle(title);
 
         Long issueId = sequence++;
 
@@ -58,9 +61,7 @@ public class IssueServiceImpl implements IssueService {
                             Priority priority) {
         Issue issue = viewIssue(issueId);
 
-        if (title == null || title.trim().isEmpty()) {
-            throw new IllegalArgumentException("Issue title cannot be empty.");
-        }
+        validateTitle(title);
 
         issue.setTitle(title);
         issue.setDescription(description);
@@ -121,5 +122,11 @@ public class IssueServiceImpl implements IssueService {
         issue.setStatus(IssueStatus.CLOSED);
 
         issueRepository.update(issue);
+    }
+
+    private void validateTitle(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Issue title cannot be empty.");
+        }
     }
 }

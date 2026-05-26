@@ -1,14 +1,17 @@
 package issuetracker.service.issue;
 
 import issuetracker.domain.account.Account;
+import issuetracker.domain.account.Role;
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
-import issuetracker.repository.issue.IssueRepositoryImpl;
+import java.time.LocalDateTime;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import repository.issue.InMemoryIssueRepository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,12 +26,12 @@ class IssueServiceTest {
 
     @BeforeEach
     void setUp() {
-        issueService = new IssueServiceImpl(new IssueRepositoryImpl());
+        issueService = new IssueServiceImpl(new InMemoryIssueRepository());
 
-        project1 = new Project();
-        tester1 = new Account();
-        dev1 = new Account();
-        pl1 = new Account();
+        project1 = new Project(1L, "project1", LocalDateTime.now());
+        tester1 = new Account(1L, "tester1", Role.TESTER);
+        dev1 = new Account(2L, "dev1", Role.DEV);
+        pl1 = new Account(3L, "PL1", Role.PL);
     }
 
     @Test
@@ -183,14 +186,14 @@ class IssueServiceTest {
         issueService.updateIssue(
                 issue.getId(),
                 "Updated login bug",
-                "Login fails only on Chrome",
+                "Updated login bug description",
                 Priority.CRITICAL
         );
 
         Issue updatedIssue = issueService.viewIssue(issue.getId());
 
         assertEquals("Updated login bug", updatedIssue.getTitle());
-        assertEquals("Login fails only on Chrome", updatedIssue.getDescription());
+        assertEquals("Updated login bug description", updatedIssue.getDescription());
         assertEquals(Priority.CRITICAL, updatedIssue.getPriority());
     }
 }
