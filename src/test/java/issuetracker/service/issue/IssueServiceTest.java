@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import repository.issue.InMemoryIssueRepository;
+import issuetracker.repository.issue.InMemoryIssueRepository;
 
 import static org.junit.jupiter.api.Assertions.*;
 

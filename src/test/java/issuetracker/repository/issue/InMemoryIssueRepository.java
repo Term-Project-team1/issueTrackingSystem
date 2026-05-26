@@ -1,7 +1,6 @@
-package repository.issue;
+package issuetracker.repository.issue;
 
 import issuetracker.domain.issue.Issue;
-import issuetracker.repository.issue.IssueRepository;
 
 import java.util.HashMap;
 import java.util.Map;
