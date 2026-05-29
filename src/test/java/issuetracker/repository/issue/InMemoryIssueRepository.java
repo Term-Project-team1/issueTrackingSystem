@@ -2,7 +2,9 @@ package issuetracker.repository.issue;
 
 import issuetracker.domain.issue.Issue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,5 +27,10 @@ public class InMemoryIssueRepository implements IssueRepository {
     public Issue update(Issue issue) {
         store.put(issue.getId(), issue);
         return issue;
+    }
+
+    @Override
+    public List<Issue> findAll() {
+        return new ArrayList<>(store.values());
     }
 }

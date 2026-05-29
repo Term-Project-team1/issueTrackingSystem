@@ -9,8 +9,13 @@ import issuetracker.domain.project.Project;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+
 import issuetracker.domain.account.Role;
+
+
 
 public class IssueRepositoryImpl implements IssueRepository {
 
@@ -70,11 +75,37 @@ public class IssueRepositoryImpl implements IssueRepository {
     @Override
     public Optional<Issue> findById(Long issueId) {
         String sql = """
-                SELECT id, project_id, title, description, status, priority,
-                       reporter_id, assignee_id, fixer_id, reported_date
-                FROM issue
-                WHERE id = ?
-                """;
+        SELECT
+            i.id,
+            i.title,
+            i.description,
+            i.status,
+            i.priority,
+            i.reported_date,
+
+            p.id AS project_id,
+            p.name AS project_name,
+            p.created_date AS project_created_date,
+
+            reporter.id AS reporter_id,
+            reporter.username AS reporter_username,
+            reporter.role AS reporter_role,
+
+            assignee.id AS assignee_id,
+            assignee.username AS assignee_username,
+            assignee.role AS assignee_role,
+
+            fixer.id AS fixer_id,
+            fixer.username AS fixer_username,
+            fixer.role AS fixer_role
+
+        FROM issue i
+        JOIN project p ON i.project_id = p.id
+        JOIN account reporter ON i.reporter_id = reporter.id
+        LEFT JOIN account assignee ON i.assignee_id = assignee.id
+        LEFT JOIN account fixer ON i.fixer_id = fixer.id
+        WHERE i.id = ?
+        """;
 
         try (
                 Connection connection = SqliteConnectionManager.getConnection();
@@ -128,6 +159,59 @@ public class IssueRepositoryImpl implements IssueRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update issue.", e);
+        }
+    }
+
+    @Override
+    public List<Issue> findAll() {
+        String sql = """
+            SELECT
+                i.id,
+                i.title,
+                i.description,
+                i.status,
+                i.priority,
+                i.reported_date,
+
+                p.id AS project_id,
+                p.name AS project_name,
+                p.created_date AS project_created_date,
+
+                reporter.id AS reporter_id,
+                reporter.username AS reporter_username,
+                reporter.role AS reporter_role,
+
+                assignee.id AS assignee_id,
+                assignee.username AS assignee_username,
+                assignee.role AS assignee_role,
+
+                fixer.id AS fixer_id,
+                fixer.username AS fixer_username,
+                fixer.role AS fixer_role
+
+            FROM issue i
+            JOIN project p ON i.project_id = p.id
+            JOIN account reporter ON i.reporter_id = reporter.id
+            LEFT JOIN account assignee ON i.assignee_id = assignee.id
+            LEFT JOIN account fixer ON i.fixer_id = fixer.id
+            """;
+
+        List<Issue> issues = new ArrayList<>();
+
+        try (
+                Connection connection = SqliteConnectionManager.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                issues.add(mapToIssue(resultSet));
+            }
+
+            return issues;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find all issues.", e);
         }
     }
 
