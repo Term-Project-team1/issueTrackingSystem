@@ -10,6 +10,7 @@ import issuetracker.domain.project.Project;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import issuetracker.domain.account.Role;
 
 public class IssueRepositoryImpl implements IssueRepository {
 
@@ -42,7 +43,7 @@ public class IssueRepositoryImpl implements IssueRepository {
             ResultSet keys = statement.getGeneratedKeys();
 
             if (keys.next()) {
-                return new Issue(
+                Issue savedIssue = new Issue(
                         keys.getLong(1),
                         issue.getProject(),
                         issue.getTitle(),
@@ -52,6 +53,11 @@ public class IssueRepositoryImpl implements IssueRepository {
                         issue.getReporter(),
                         issue.getReportedDate()
                 );
+
+                savedIssue.setAssignee(issue.getAssignee());
+                savedIssue.setFixer(issue.getFixer());
+
+                return savedIssue;
             }
 
             throw new RuntimeException("Failed to save issue.");
@@ -126,25 +132,47 @@ public class IssueRepositoryImpl implements IssueRepository {
     }
 
     private Issue mapToIssue(ResultSet resultSet) throws SQLException {
+        Project project = new Project(
+                resultSet.getLong("project_id"),
+                resultSet.getString("project_name"),
+                LocalDateTime.parse(resultSet.getString("project_created_date"))
+        );
+
+        Account reporter = new Account(
+                resultSet.getLong("reporter_id"),
+                resultSet.getString("reporter_username"),
+                Role.valueOf(resultSet.getString("reporter_role"))
+        );
+
         Issue issue = new Issue(
                 resultSet.getLong("id"),
-                new Project(resultSet.getLong("project_id"), null, null),
+                project,
                 resultSet.getString("title"),
                 resultSet.getString("description"),
                 IssueStatus.valueOf(resultSet.getString("status")),
                 Priority.valueOf(resultSet.getString("priority")),
-                new Account(resultSet.getLong("reporter_id"), null, null),
+                reporter,
                 LocalDateTime.parse(resultSet.getString("reported_date"))
         );
 
         Long assigneeId = getNullableLong(resultSet, "assignee_id");
         if (assigneeId != null) {
-            issue.setAssignee(new Account(assigneeId, null, null));
+            Account assignee = new Account(
+                    assigneeId,
+                    resultSet.getString("assignee_username"),
+                    Role.valueOf(resultSet.getString("assignee_role"))
+            );
+            issue.setAssignee(assignee);
         }
 
         Long fixerId = getNullableLong(resultSet, "fixer_id");
         if (fixerId != null) {
-            issue.setFixer(new Account(fixerId, null, null));
+            Account fixer = new Account(
+                    fixerId,
+                    resultSet.getString("fixer_username"),
+                    Role.valueOf(resultSet.getString("fixer_role"))
+            );
+            issue.setFixer(fixer);
         }
 
         return issue;
