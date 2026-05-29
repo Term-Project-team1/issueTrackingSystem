@@ -1,23 +1,27 @@
 package issuetracker.repository.sql;
 
-import issuetracker.domain.account.Account;
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
-import issuetracker.domain.issue.IssueFilter;
 import issuetracker.repository.issue.IssueRepository;
+import issuetracker.service.search.SearchService.IssueFilter;
+import issuetracker.domain.account.Account;
 
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
-
 public class SqlIssueRepository implements IssueRepository {
 
     private final Connection connection;
 
     public SqlIssueRepository(Connection connection) {
         this.connection = connection;
+    }
+
+    @Override
+    public Issue save(Issue issue) {
+        return null;
     }
 
     @Override
@@ -43,6 +47,11 @@ public class SqlIssueRepository implements IssueRepository {
             throw new RuntimeException("이슈 조회 실패", e);
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Issue update(Issue issue) {
+        return null;
     }
 
     @Override
