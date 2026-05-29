@@ -5,7 +5,7 @@ import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
-import issuetracker.domain.issue.IssueFilter;
+import issuetracker.service.search.SearchService.IssueFilter;
 import issuetracker.repository.issue.IssueRepository;
 
 import java.sql.*;

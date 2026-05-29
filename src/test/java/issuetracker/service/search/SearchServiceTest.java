@@ -2,7 +2,7 @@ package issuetracker.service.search;
 
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
-import issuetracker.domain.issue.IssueFilter;
+import issuetracker.service.search.SearchService.IssueFilter;
 import issuetracker.repository.sql.SqlIssueRepository;
 import org.junit.jupiter.api.*;
 
