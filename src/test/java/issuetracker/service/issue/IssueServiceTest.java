@@ -196,4 +196,72 @@ class IssueServiceTest {
         assertEquals("Updated login bug description", updatedIssue.getDescription());
         assertEquals(Priority.CRITICAL, updatedIssue.getPriority());
     }
+
+    @Test
+    @DisplayName("reopenIssue: RESOLVED 상태의 이슈를 REOPENED로 변경할 수 있다")
+    void reopenIssue_RESOLVED에서_REOPENED로_변경되는지() {
+        Issue issue = issueService.createIssue(
+                project1,
+                tester1,
+                "Login bug",
+                "Login fails with valid password",
+                Priority.MAJOR
+        );
+
+        issueService.assignIssue(issue.getId(), dev1, pl1);
+        issueService.markFixed(issue.getId(), dev1);
+        issueService.resolveIssue(issue.getId(), tester1);
+
+        issueService.reopenIssue(issue.getId(), tester1);
+
+        Issue reopenedIssue = issueService.viewIssue(issue.getId());
+
+        assertEquals(IssueStatus.REOPENED, reopenedIssue.getStatus());
+    }
+
+    @Test
+    @DisplayName("reopenIssue: CLOSED 상태의 이슈를 REOPENED로 변경할 수 있다")
+    void reopenIssue_CLOSED에서_REOPENED로_변경되는지() {
+        Issue issue = issueService.createIssue(
+                project1,
+                tester1,
+                "Login bug",
+                "Login fails with valid password",
+                Priority.MAJOR
+        );
+
+        issueService.assignIssue(issue.getId(), dev1, pl1);
+        issueService.markFixed(issue.getId(), dev1);
+        issueService.resolveIssue(issue.getId(), tester1);
+        issueService.closeIssue(issue.getId(), pl1);
+
+        issueService.reopenIssue(issue.getId(), tester1);
+
+        Issue reopenedIssue = issueService.viewIssue(issue.getId());
+
+        assertEquals(IssueStatus.REOPENED, reopenedIssue.getStatus());
+    }
+
+    @Test
+    @DisplayName("assignIssue: REOPENED 상태의 이슈를 다시 ASSIGNED로 변경할 수 있다")
+    void assignIssue_REOPENED에서_ASSIGNED로_변경되는지() {
+        Issue issue = issueService.createIssue(
+                project1,
+                tester1,
+                "Login bug",
+                "Login fails with valid password",
+                Priority.MAJOR
+        );
+
+        issueService.assignIssue(issue.getId(), dev1, pl1);
+        issueService.markFixed(issue.getId(), dev1);
+        issueService.resolveIssue(issue.getId(), tester1);
+        issueService.reopenIssue(issue.getId(), tester1);
+
+        issueService.assignIssue(issue.getId(), dev1, pl1);
+
+        Issue reassignedIssue = issueService.viewIssue(issue.getId());
+
+        assertEquals(IssueStatus.ASSIGNED, reassignedIssue.getStatus());
+    }
 }

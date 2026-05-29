@@ -74,8 +74,9 @@ public class IssueServiceImpl implements IssueService {
     public void assignIssue(Long issueId, Account assignee, Account pl) {
         Issue issue = viewIssue(issueId);
 
-        if (issue.getStatus() != IssueStatus.NEW) {
-            throw new IllegalStateException("Issue can only be assigned from NEW status.");
+        if (issue.getStatus() != IssueStatus.NEW
+                && issue.getStatus() != IssueStatus.REOPENED) {
+            throw new IllegalStateException("Issue can only be assigned from NEW or REOPENED status.");
         }
 
         issue.setAssignee(assignee);
@@ -120,6 +121,20 @@ public class IssueServiceImpl implements IssueService {
         }
 
         issue.setStatus(IssueStatus.CLOSED);
+
+        issueRepository.update(issue);
+    }
+
+    @Override
+    public void reopenIssue(Long issueId, Account user) {
+        Issue issue = viewIssue(issueId);
+
+        if (issue.getStatus() != IssueStatus.RESOLVED
+                && issue.getStatus() != IssueStatus.CLOSED) {
+            throw new IllegalStateException("Issue can only be reopened from RESOLVED or CLOSED status.");
+        }
+
+        issue.setStatus(IssueStatus.REOPENED);
 
         issueRepository.update(issue);
     }
