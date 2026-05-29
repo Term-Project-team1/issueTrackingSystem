@@ -1,6 +1,4 @@
-package issuetracker.model;
-
-import issuetracker.domain.issue.IssueStatus;
+package issuetracker.domain.issue;
 
 /*
 이슈 검색 조건을 하나로 묶는 클래스

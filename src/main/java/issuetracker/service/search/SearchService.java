@@ -2,7 +2,7 @@ package issuetracker.service.search;
 
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
-import issuetracker.model.IssueFilter;
+import issuetracker.domain.issue.IssueFilter;
 import issuetracker.repository.issue.IssueRepository;
 
 import java.util.List;
