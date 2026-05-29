@@ -17,7 +17,6 @@ import java.util.Optional;
 import issuetracker.domain.account.Role;
 
 
-
 public class IssueRepositoryImpl implements IssueRepository {
 
     @Override

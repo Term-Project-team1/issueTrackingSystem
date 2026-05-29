@@ -1,15 +1,18 @@
 package issuetracker.service.comment;
 
 import issuetracker.domain.account.Account;
+import issuetracker.domain.account.Role;
 import issuetracker.domain.comment.Comment;
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
-import issuetracker.repository.sql.SqlCommentRepository;
-import issuetracker.repository.sql.SqlIssueRepository;
+import issuetracker.domain.project.Project;
+import issuetracker.repository.comment.CommentRepositoryImpl;
+import issuetracker.repository.issue.InMemoryIssueRepository;
 import org.junit.jupiter.api.*;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,8 +27,17 @@ class CommentServiceTest {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         createSchema();
         insertTestData();
-        SqlCommentRepository commentRepo = new SqlCommentRepository(connection);
-        SqlIssueRepository issueRepo = new SqlIssueRepository(connection);
+
+        InMemoryIssueRepository issueRepo = new InMemoryIssueRepository();
+        Account reporter = new Account(1L, "tester1", Role.TESTER);
+        Project project = new Project(1L, "project1", LocalDateTime.now());
+        Issue testIssue = new Issue(
+                1L, project, "로그인 버그", "로그인이 안됩니다",
+                IssueStatus.NEW, Priority.MAJOR, reporter, LocalDateTime.now()
+        );
+        issueRepo.save(testIssue);
+
+        CommentRepositoryImpl commentRepo = new CommentRepositoryImpl(connection);
         commentService = new CommentService(commentRepo, issueRepo);
     }
 

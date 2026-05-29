@@ -1,19 +1,18 @@
-package issuetracker.repository.sql;
+package issuetracker.repository.comment;
 
 import issuetracker.domain.account.Account;
 import issuetracker.domain.comment.Comment;
-import issuetracker.repository.comment.CommentRepository;
 
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SqlCommentRepository implements CommentRepository {
+public class CommentRepositoryImpl implements CommentRepository {
 
     private final Connection connection;
 
-    public SqlCommentRepository(Connection connection) {
+    public CommentRepositoryImpl(Connection connection) {
         this.connection = connection;
     }
 

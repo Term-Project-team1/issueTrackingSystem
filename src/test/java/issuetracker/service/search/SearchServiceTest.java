@@ -1,12 +1,17 @@
 package issuetracker.service.search;
 
+import issuetracker.domain.account.Account;
+import issuetracker.domain.account.Role;
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
+import issuetracker.domain.issue.Priority;
+import issuetracker.domain.project.Project;
+import issuetracker.repository.issue.InMemoryIssueRepository;
 import issuetracker.service.search.SearchService.IssueFilter;
-import issuetracker.repository.sql.SqlIssueRepository;
 import org.junit.jupiter.api.*;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,7 +26,26 @@ class SearchServiceTest {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         createSchema();
         insertTestData();
-        SqlIssueRepository issueRepo = new SqlIssueRepository(connection);
+
+        InMemoryIssueRepository issueRepo = new InMemoryIssueRepository();
+
+        Account tester1 = new Account(1L, "tester1", Role.TESTER);
+        Account dev1 = new Account(2L, "dev1", Role.DEV);
+        Project project = new Project(1L, "project1", LocalDateTime.now());
+
+        Issue issue1 = new Issue(1L, project, "로그인 버그", "로그인이 안됩니다",
+                IssueStatus.NEW, Priority.MAJOR, tester1, LocalDateTime.now());
+        issueRepo.save(issue1);
+
+        Issue issue2 = new Issue(2L, project, "회원가입 오류", "이메일 중복 처리 문제",
+                IssueStatus.ASSIGNED, Priority.MINOR, tester1, LocalDateTime.now());
+        issue2.setAssignee(dev1);
+        issueRepo.save(issue2);
+
+        Issue issue3 = new Issue(3L, project, "검색 기능 개선", "키워드 검색이 느립니다",
+                IssueStatus.NEW, Priority.CRITICAL, tester1, LocalDateTime.now());
+        issueRepo.save(issue3);
+
         searchService = new SearchService(issueRepo);
     }
 
