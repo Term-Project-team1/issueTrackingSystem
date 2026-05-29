@@ -6,6 +6,7 @@ import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
+import issuetracker.repository.recommendation.RecommendationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,7 @@ class RecommendationServiceTest {
     private Account pl1;
     private Account admin;
 
-    private FakeRecommendationQuery query;
+    private FakeRecommendationRepository query;
     private RecommendationService recommendationService;
 
     @BeforeEach // 각각의 @Test 메서드가 실행되기 직전마다 매번 새로 실행
@@ -55,7 +56,7 @@ class RecommendationServiceTest {
         pl1 = new Account(31L, "PL1", Role.PL);
         admin = new Account(41L, "admin", Role.ADMIN);
 
-        query = new FakeRecommendationQuery();
+        query = new FakeRecommendationRepository();
         recommendationService = new RecommendationServiceImpl(query);
     }
 
@@ -115,7 +116,7 @@ class RecommendationServiceTest {
         assertTrue(result.stream().allMatch(a -> a.getRole() == Role.DEV));
     }
 
-    private static class FakeRecommendationQuery implements RecommendationQuery {
+    private static class FakeRecommendationRepository implements RecommendationRepository {
 
         final List<Account> developers = new ArrayList<>();
         final Map<Long, Long> fixedCounts = new HashMap<>();

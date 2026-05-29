@@ -3,6 +3,7 @@ package issuetracker.service.recommendation;
 import issuetracker.domain.account.Account;
 import issuetracker.domain.account.Role;
 import issuetracker.domain.issue.Issue;
+import issuetracker.repository.recommendation.RecommendationRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,10 +13,10 @@ import java.util.Objects;
 
 public class RecommendationServiceImpl implements RecommendationService {
 
-    private final RecommendationQuery recommendationQuery;
+    private final RecommendationRepository recommendationRepository;
 
-    public RecommendationServiceImpl(RecommendationQuery recommendationQuery) {
-        this.recommendationQuery = recommendationQuery;
+    public RecommendationServiceImpl(RecommendationRepository recommendationRepository) {
+        this.recommendationRepository = recommendationRepository;
     }
 
     @Override
@@ -27,8 +28,8 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
 
         Long projectId = issue.getProject().getId();
-        List<Account> developers = recommendationQuery.findDevelopers();
-        Map<Long, Long> fixedCounts = recommendationQuery.countFixedIssuesByDeveloper(projectId);
+        List<Account> developers = recommendationRepository.findDevelopers();
+        Map<Long, Long> fixedCounts = recommendationRepository.countFixedIssuesByDeveloper(projectId);
 
         List<Account> candidates = new ArrayList<>();
         for (Account developer : developers) {

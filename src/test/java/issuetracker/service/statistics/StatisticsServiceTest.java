@@ -4,6 +4,7 @@ import issuetracker.domain.account.Account;
 import issuetracker.domain.account.Role;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
+import issuetracker.repository.statistics.StatisticsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ class StatisticsServiceTest {
     private Account dev2;
     private Account tester1;
 
-    private FakeStatisticsQuery query;
+    private FakeStatisticsRepository query;
     private StatisticsService statisticsService;
 
     @BeforeEach
@@ -37,7 +38,7 @@ class StatisticsServiceTest {
         dev2 = new Account(12L, "dev2", Role.DEV);
         tester1 = new Account(21L, "tester1", Role.TESTER);
 
-        query = new FakeStatisticsQuery();
+        query = new FakeStatisticsRepository();
         statisticsService = new StatisticsServiceImpl(query);
     }
 
@@ -168,7 +169,7 @@ class StatisticsServiceTest {
         assertEquals(0L, result.get(YearMonth.of(2026, 12)));
     }
 
-    private static class FakeStatisticsQuery implements StatisticsQuery {
+    private static class FakeStatisticsRepository implements StatisticsRepository {
 
         final List<Account> developers = new ArrayList<>();
         final Map<IssueStatus, Long> statusCounts = new EnumMap<>(IssueStatus.class);

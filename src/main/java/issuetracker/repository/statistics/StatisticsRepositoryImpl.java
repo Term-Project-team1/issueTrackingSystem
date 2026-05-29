@@ -1,4 +1,4 @@
-package issuetracker.service.statistics;
+package issuetracker.repository.statistics;
 
 import issuetracker.database.SqliteConnectionManager;
 import issuetracker.domain.account.Account;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SqliteStatisticsQuery implements StatisticsQuery {
+public class StatisticsRepositoryImpl implements StatisticsRepository {
 
     @Override
     public Map<IssueStatus, Long> countByStatus(Long projectId) {

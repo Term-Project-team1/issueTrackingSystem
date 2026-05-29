@@ -1,10 +1,10 @@
-package issuetracker.service.recommendation;
+package issuetracker.repository.recommendation;
 
 import issuetracker.domain.account.Account;
 import java.util.List;
 import java.util.Map;
 
-public interface RecommendationQuery {
+public interface RecommendationRepository {
 
     List<Account> findDevelopers();
 

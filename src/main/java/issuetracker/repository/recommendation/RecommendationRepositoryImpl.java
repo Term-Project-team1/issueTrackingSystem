@@ -1,4 +1,4 @@
-package issuetracker.service.recommendation;
+package issuetracker.repository.recommendation;
 
 import issuetracker.database.SqliteConnectionManager;
 import issuetracker.domain.account.Account;
@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SqliteRecommendationQuery implements RecommendationQuery {
+public class RecommendationRepositoryImpl implements RecommendationRepository {
 
     @Override
     public List<Account> findDevelopers() {

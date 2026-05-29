@@ -1,4 +1,4 @@
-package issuetracker.service.statistics;
+package issuetracker.repository.statistics;
 
 import issuetracker.domain.account.Account;
 import issuetracker.domain.issue.IssueStatus;
@@ -8,7 +8,7 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 
-public interface StatisticsQuery {
+public interface StatisticsRepository {
 
     Map<IssueStatus, Long> countByStatus(Long projectId);
 
