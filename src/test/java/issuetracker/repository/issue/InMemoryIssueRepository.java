@@ -1,8 +1,9 @@
 package issuetracker.repository.issue;
 
 import issuetracker.domain.issue.Issue;
-import issuetracker.service.search.SearchService.IssueFilter;
+import issuetracker.service.search.SearchService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,32 +32,21 @@ public class InMemoryIssueRepository implements IssueRepository {
     }
 
     @Override
-    public List<Issue> findByFilter(IssueFilter filter) {
-        return store.values().stream()
-                .filter(issue -> filter.status == null
-                        || issue.getStatus() == filter.status)
-
-                .filter(issue -> filter.assigneeId == null
-                        || (issue.getAssignee() != null
-                        && issue.getAssignee().getId().equals(filter.assigneeId)))
-
-                .filter(issue -> filter.reporterId == null
-                        || (issue.getReporter() != null
-                        && issue.getReporter().getId().equals(filter.reporterId)))
-
-                .filter(issue -> filter.keyword == null
-                        || filter.keyword.isBlank()
-                        || containsIgnoreCase(issue.getTitle(), filter.keyword)
-                        || containsIgnoreCase(issue.getDescription(), filter.keyword))
-
-                .collect(Collectors.toList());
+    public List<Issue> findAll() {
+        return new ArrayList<>(store.values());
     }
 
-    private boolean containsIgnoreCase(String text, String keyword) {
-        if (text == null || keyword == null) {
-            return false;
-        }
-
-        return text.toLowerCase().contains(keyword.toLowerCase());
+    @Override
+    public List<Issue> findByFilter(SearchService.IssueFilter filter) {
+        return store.values().stream()
+                .filter(i -> filter.status == null || i.getStatus() == filter.status)
+                .filter(i -> filter.assigneeId == null ||
+                        (i.getAssignee() != null && i.getAssignee().getId().equals(filter.assigneeId)))
+                .filter(i -> filter.reporterId == null ||
+                        i.getReporter().getId().equals(filter.reporterId))
+                .filter(i -> filter.keyword == null ||
+                        i.getTitle().contains(filter.keyword) ||
+                        (i.getDescription() != null && i.getDescription().contains(filter.keyword)))
+                .collect(Collectors.toList());
     }
 }

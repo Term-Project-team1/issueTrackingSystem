@@ -8,8 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -109,73 +107,12 @@ class StatisticsServiceTest {
         assertTrue(developerResult.values().stream().allMatch(v -> v == 0L));
     }
 
-    @Test
-    @DisplayName("countIssuesByDay: 입력 월의 일별 카운트를 정확히 반환")
-    void countIssuesByDay_입력월의일별카운트반환() {
-        YearMonth month = YearMonth.of(2026, 5);
-        query.dayCounts.put(LocalDate.of(2026, 5, 1), 3L);
-        query.dayCounts.put(LocalDate.of(2026, 5, 15), 2L);
-        query.dayCounts.put(LocalDate.of(2026, 5, 31), 1L);
-
-        Map<LocalDate, Long> result = statisticsService.countIssuesByDay(PROJECT_ID, month);
-
-        assertEquals(3L, result.get(LocalDate.of(2026, 5, 1)));
-        assertEquals(2L, result.get(LocalDate.of(2026, 5, 15)));
-        assertEquals(1L, result.get(LocalDate.of(2026, 5, 31)));
-    }
-
-    @Test
-    @DisplayName("countIssuesByDay: 해당 월 모든 날짜를 0으로 채워 반환")
-    void countIssuesByDay_해당월모든날짜를0으로채움() {
-        YearMonth month = YearMonth.of(2026, 5);  // 31일
-        query.dayCounts.put(LocalDate.of(2026, 5, 10), 5L);
-
-        Map<LocalDate, Long> result = statisticsService.countIssuesByDay(PROJECT_ID, month);
-
-        assertEquals(31, result.size());
-        assertEquals(5L, result.get(LocalDate.of(2026, 5, 10)));
-        assertEquals(0L, result.get(LocalDate.of(2026, 5, 1)));
-        assertEquals(0L, result.get(LocalDate.of(2026, 5, 31)));
-        assertTrue(result.containsKey(LocalDate.of(2026, 5, 20)));
-    }
-
-    @Test
-    @DisplayName("countIssuesByMonth: 입력 연도의 월별 카운트를 정확히 반환")
-    void countIssuesByMonth_입력연도의월별카운트반환() {
-        int year = 2026;
-        query.monthCounts.put(YearMonth.of(2026, 1), 4L);
-        query.monthCounts.put(YearMonth.of(2026, 5), 7L);
-        query.monthCounts.put(YearMonth.of(2026, 12), 2L);
-
-        Map<YearMonth, Long> result = statisticsService.countIssuesByMonth(PROJECT_ID, year);
-
-        assertEquals(4L, result.get(YearMonth.of(2026, 1)));
-        assertEquals(7L, result.get(YearMonth.of(2026, 5)));
-        assertEquals(2L, result.get(YearMonth.of(2026, 12)));
-    }
-
-    @Test
-    @DisplayName("countIssuesByMonth: 12개월 모두 0으로 채워 반환")
-    void countIssuesByMonth_12개월모두0으로채움() {
-        int year = 2026;
-        query.monthCounts.put(YearMonth.of(2026, 6), 3L);
-
-        Map<YearMonth, Long> result = statisticsService.countIssuesByMonth(PROJECT_ID, year);
-
-        assertEquals(12, result.size());
-        assertEquals(3L, result.get(YearMonth.of(2026, 6)));
-        assertEquals(0L, result.get(YearMonth.of(2026, 1)));
-        assertEquals(0L, result.get(YearMonth.of(2026, 12)));
-    }
-
     private static class FakeStatisticsQuery implements StatisticsQuery {
 
         final List<Account> developers = new ArrayList<>();
         final Map<IssueStatus, Long> statusCounts = new EnumMap<>(IssueStatus.class);
         final Map<Priority, Long> priorityCounts = new EnumMap<>(Priority.class);
         final Map<Long, Long> fixerCounts = new HashMap<>();
-        final Map<LocalDate, Long> dayCounts = new HashMap<>();
-        final Map<YearMonth, Long> monthCounts = new HashMap<>();
 
         @Override
         public Map<IssueStatus, Long> countByStatus(Long projectId) {
@@ -199,16 +136,6 @@ class StatisticsServiceTest {
         @Override
         public List<Account> findDevelopers() {
             return List.copyOf(developers);
-        }
-
-        @Override
-        public Map<LocalDate, Long> countByDay(Long projectId, YearMonth month) {
-            return new HashMap<>(dayCounts);
-        }
-
-        @Override
-        public Map<YearMonth, Long> countByMonth(Long projectId, int year) {
-            return new HashMap<>(monthCounts);
         }
     }
 }

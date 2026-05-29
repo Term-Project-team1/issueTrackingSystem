@@ -27,4 +27,6 @@ public interface IssueService {
     void resolveIssue(Long issueId, Account tester);
 
     void closeIssue(Long issueId, Account pl);
+
+    void reopenIssue(Long issueId, Account user);
 }

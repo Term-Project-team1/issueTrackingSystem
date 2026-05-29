@@ -54,6 +54,31 @@ public class SqlIssueRepository implements IssueRepository {
         return null;
     }
 
+
+    @Override
+    public List<Issue> findAll() {
+        String sql = """
+        SELECT i.*,
+               r.id as r_id, r.username as r_username,
+               a.id as a_id, a.username as a_username,
+               f.id as f_id, f.username as f_username,
+               p.id as p_id, p.name as p_name
+        FROM issue i
+        JOIN account r ON i.reporter_id = r.id
+        JOIN project p ON i.project_id = p.id
+        LEFT JOIN account a ON i.assignee_id = a.id
+        LEFT JOIN account f ON i.fixer_id = f.id
+        """;
+        List<Issue> issues = new ArrayList<>();
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) issues.add(mapIssue(rs));
+        } catch (SQLException e) {
+            throw new RuntimeException("전체 이슈 조회 실패", e);
+        }
+        return issues;
+    }
+
     @Override
     public List<Issue> findByFilter(IssueFilter filter) {
         StringBuilder sql = new StringBuilder("""

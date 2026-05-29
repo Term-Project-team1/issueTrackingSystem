@@ -2,9 +2,9 @@ package issuetracker.repository.issue;
 
 import issuetracker.domain.issue.Issue;
 import issuetracker.service.search.SearchService.IssueFilter;
+import java.util.Optional;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface IssueRepository {
 
@@ -13,6 +13,8 @@ public interface IssueRepository {
     Optional<Issue> findById(Long issueId);
 
     Issue update(Issue issue);
+
+    List<Issue> findAll();
 
     List<Issue> findByFilter(IssueFilter filter);
 }

@@ -4,14 +4,10 @@ import issuetracker.domain.account.Account;
 import issuetracker.domain.account.Role;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
-import java.time.LocalDate;
-import java.time.Month;
-import java.time.YearMonth;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class StatisticsServiceImpl implements StatisticsService {
 
@@ -37,28 +33,6 @@ public class StatisticsServiceImpl implements StatisticsService {
         Map<Priority, Long> result = new EnumMap<>(Priority.class);
         for (Priority priority : Priority.values()) {
             result.put(priority, raw.getOrDefault(priority, 0L));
-        }
-        return result;
-    }
-
-    @Override
-    public Map<LocalDate, Long> countIssuesByDay(Long projectId, YearMonth month) {
-        Map<LocalDate, Long> raw = statisticsQuery.countByDay(projectId, month);
-        Map<LocalDate, Long> result = new TreeMap<>();
-        for (int day = 1; day <= month.lengthOfMonth(); day++) {
-            LocalDate date = month.atDay(day);
-            result.put(date, raw.getOrDefault(date, 0L));
-        }
-        return result;
-    }
-
-    @Override
-    public Map<YearMonth, Long> countIssuesByMonth(Long projectId, int year) {
-        Map<YearMonth, Long> raw = statisticsQuery.countByMonth(projectId, year);
-        Map<YearMonth, Long> result = new TreeMap<>();
-        for (Month m : Month.values()) {
-            YearMonth ym = YearMonth.of(year, m);
-            result.put(ym, raw.getOrDefault(ym, 0L));
         }
         return result;
     }

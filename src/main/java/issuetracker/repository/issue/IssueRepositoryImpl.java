@@ -3,17 +3,20 @@ package issuetracker.repository.issue;
 import issuetracker.database.SqliteConnectionManager;
 import issuetracker.domain.account.Account;
 import issuetracker.domain.issue.Issue;
-import issuetracker.service.search.SearchService.IssueFilter;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
+import issuetracker.service.search.SearchService;
 
+import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import java.sql.*;
-import java.time.LocalDateTime;
+import issuetracker.domain.account.Role;
+
+
 
 public class IssueRepositoryImpl implements IssueRepository {
 
@@ -46,7 +49,7 @@ public class IssueRepositoryImpl implements IssueRepository {
             ResultSet keys = statement.getGeneratedKeys();
 
             if (keys.next()) {
-                return new Issue(
+                Issue savedIssue = new Issue(
                         keys.getLong(1),
                         issue.getProject(),
                         issue.getTitle(),
@@ -56,6 +59,11 @@ public class IssueRepositoryImpl implements IssueRepository {
                         issue.getReporter(),
                         issue.getReportedDate()
                 );
+
+                savedIssue.setAssignee(issue.getAssignee());
+                savedIssue.setFixer(issue.getFixer());
+
+                return savedIssue;
             }
 
             throw new RuntimeException("Failed to save issue.");
@@ -68,11 +76,37 @@ public class IssueRepositoryImpl implements IssueRepository {
     @Override
     public Optional<Issue> findById(Long issueId) {
         String sql = """
-                SELECT id, project_id, title, description, status, priority,
-                       reporter_id, assignee_id, fixer_id, reported_date
-                FROM issue
-                WHERE id = ?
-                """;
+        SELECT
+            i.id,
+            i.title,
+            i.description,
+            i.status,
+            i.priority,
+            i.reported_date,
+
+            p.id AS project_id,
+            p.name AS project_name,
+            p.created_date AS project_created_date,
+
+            reporter.id AS reporter_id,
+            reporter.username AS reporter_username,
+            reporter.role AS reporter_role,
+
+            assignee.id AS assignee_id,
+            assignee.username AS assignee_username,
+            assignee.role AS assignee_role,
+
+            fixer.id AS fixer_id,
+            fixer.username AS fixer_username,
+            fixer.role AS fixer_role
+
+        FROM issue i
+        JOIN project p ON i.project_id = p.id
+        JOIN account reporter ON i.reporter_id = reporter.id
+        LEFT JOIN account assignee ON i.assignee_id = assignee.id
+        LEFT JOIN account fixer ON i.fixer_id = fixer.id
+        WHERE i.id = ?
+        """;
 
         try (
                 Connection connection = SqliteConnectionManager.getConnection();
@@ -130,37 +164,96 @@ public class IssueRepositoryImpl implements IssueRepository {
     }
 
     @Override
-    public List<Issue> findByFilter(IssueFilter filter) {
+    public List<Issue> findAll() {
+        String sql = """
+            SELECT
+                i.id,
+                i.title,
+                i.description,
+                i.status,
+                i.priority,
+                i.reported_date,
+
+                p.id AS project_id,
+                p.name AS project_name,
+                p.created_date AS project_created_date,
+
+                reporter.id AS reporter_id,
+                reporter.username AS reporter_username,
+                reporter.role AS reporter_role,
+
+                assignee.id AS assignee_id,
+                assignee.username AS assignee_username,
+                assignee.role AS assignee_role,
+
+                fixer.id AS fixer_id,
+                fixer.username AS fixer_username,
+                fixer.role AS fixer_role
+
+            FROM issue i
+            JOIN project p ON i.project_id = p.id
+            JOIN account reporter ON i.reporter_id = reporter.id
+            LEFT JOIN account assignee ON i.assignee_id = assignee.id
+            LEFT JOIN account fixer ON i.fixer_id = fixer.id
+            """;
+
+        List<Issue> issues = new ArrayList<>();
+
+        try (
+                Connection connection = SqliteConnectionManager.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                issues.add(mapToIssue(resultSet));
+            }
+
+            return issues;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find all issues.", e);
+        }
+    }
+
+    @Override
+    public List<Issue> findByFilter(SearchService.IssueFilter filter) {
         StringBuilder sql = new StringBuilder("""
-            SELECT id, project_id, title, description, status, priority,
-                   reporter_id, assignee_id, fixer_id, reported_date
-            FROM issue
-            WHERE 1 = 1
-            """);
+        SELECT
+            i.id, i.title, i.description, i.status, i.priority, i.reported_date,
+            p.id AS project_id, p.name AS project_name, p.created_date AS project_created_date,
+            reporter.id AS reporter_id, reporter.username AS reporter_username, reporter.role AS reporter_role,
+            assignee.id AS assignee_id, assignee.username AS assignee_username, assignee.role AS assignee_role,
+            fixer.id AS fixer_id, fixer.username AS fixer_username, fixer.role AS fixer_role
+        FROM issue i
+        JOIN project p ON i.project_id = p.id
+        JOIN account reporter ON i.reporter_id = reporter.id
+        LEFT JOIN account assignee ON i.assignee_id = assignee.id
+        LEFT JOIN account fixer ON i.fixer_id = fixer.id
+        WHERE 1=1
+        """);
 
         List<Object> params = new ArrayList<>();
 
         if (filter.status != null) {
-            sql.append(" AND status = ?");
+            sql.append(" AND i.status = ?");
             params.add(filter.status.name());
         }
-
         if (filter.assigneeId != null) {
-            sql.append(" AND assignee_id = ?");
+            sql.append(" AND i.assignee_id = ?");
             params.add(filter.assigneeId);
         }
-
         if (filter.reporterId != null) {
-            sql.append(" AND reporter_id = ?");
+            sql.append(" AND i.reporter_id = ?");
             params.add(filter.reporterId);
         }
-
         if (filter.keyword != null && !filter.keyword.isBlank()) {
-            sql.append(" AND (title LIKE ? OR description LIKE ?)");
-            String keyword = "%" + filter.keyword + "%";
-            params.add(keyword);
-            params.add(keyword);
+            sql.append(" AND (i.title LIKE ? OR i.description LIKE ?)");
+            params.add("%" + filter.keyword + "%");
+            params.add("%" + filter.keyword + "%");
         }
+
+        List<Issue> issues = new ArrayList<>();
 
         try (
                 Connection connection = SqliteConnectionManager.getConnection();
@@ -171,8 +264,6 @@ public class IssueRepositoryImpl implements IssueRepository {
             }
 
             ResultSet resultSet = statement.executeQuery();
-            List<Issue> issues = new ArrayList<>();
-
             while (resultSet.next()) {
                 issues.add(mapToIssue(resultSet));
             }
@@ -184,28 +275,48 @@ public class IssueRepositoryImpl implements IssueRepository {
         }
     }
 
-
-
     private Issue mapToIssue(ResultSet resultSet) throws SQLException {
+        Project project = new Project(
+                resultSet.getLong("project_id"),
+                resultSet.getString("project_name"),
+                LocalDateTime.parse(resultSet.getString("project_created_date"))
+        );
+
+        Account reporter = new Account(
+                resultSet.getLong("reporter_id"),
+                resultSet.getString("reporter_username"),
+                Role.valueOf(resultSet.getString("reporter_role"))
+        );
+
         Issue issue = new Issue(
                 resultSet.getLong("id"),
-                new Project(resultSet.getLong("project_id"), null, null),
+                project,
                 resultSet.getString("title"),
                 resultSet.getString("description"),
                 IssueStatus.valueOf(resultSet.getString("status")),
                 Priority.valueOf(resultSet.getString("priority")),
-                new Account(resultSet.getLong("reporter_id"), null, null),
+                reporter,
                 LocalDateTime.parse(resultSet.getString("reported_date"))
         );
 
         Long assigneeId = getNullableLong(resultSet, "assignee_id");
         if (assigneeId != null) {
-            issue.setAssignee(new Account(assigneeId, null, null));
+            Account assignee = new Account(
+                    assigneeId,
+                    resultSet.getString("assignee_username"),
+                    Role.valueOf(resultSet.getString("assignee_role"))
+            );
+            issue.setAssignee(assignee);
         }
 
         Long fixerId = getNullableLong(resultSet, "fixer_id");
         if (fixerId != null) {
-            issue.setFixer(new Account(fixerId, null, null));
+            Account fixer = new Account(
+                    fixerId,
+                    resultSet.getString("fixer_username"),
+                    Role.valueOf(resultSet.getString("fixer_role"))
+            );
+            issue.setFixer(fixer);
         }
 
         return issue;
