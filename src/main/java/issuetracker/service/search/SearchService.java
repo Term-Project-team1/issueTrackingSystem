@@ -2,38 +2,16 @@ package issuetracker.service.search;
 
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
-import issuetracker.repository.issue.IssueRepository;
 import java.util.List;
 
-public class SearchService {
+public interface SearchService {
+    List<Issue> searchByStatus(IssueStatus status);
+    List<Issue> searchByAssignee(Long assigneeId);
+    List<Issue> searchByReporter(Long reporterId);
+    List<Issue> searchByKeyword(String keyword);
+    List<Issue> searchByFilter(IssueFilter filter);
 
-    private final IssueRepository issueRepo;
-
-    public SearchService(IssueRepository issueRepo) {
-        this.issueRepo = issueRepo;
-    }
-
-    public List<Issue> searchByStatus(IssueStatus status) {
-        return issueRepo.findByFilter(new IssueFilter().status(status));
-    }
-
-    public List<Issue> searchByAssignee(Long assigneeId) {
-        return issueRepo.findByFilter(new IssueFilter().assigneeId(assigneeId));
-    }
-
-    public List<Issue> searchByReporter(Long reporterId) {
-        return issueRepo.findByFilter(new IssueFilter().reporterId(reporterId));
-    }
-
-    public List<Issue> searchByKeyword(String keyword) {
-        return issueRepo.findByFilter(new IssueFilter().keyword(keyword));
-    }
-
-    public List<Issue> searchByFilter(IssueFilter filter) {
-        return issueRepo.findByFilter(filter);
-    }
-
-    public static class IssueFilter {
+    class IssueFilter {
         public IssueStatus status;
         public Long assigneeId;
         public Long reporterId;

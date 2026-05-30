@@ -46,7 +46,7 @@ class SearchServiceTest {
                 IssueStatus.NEW, Priority.CRITICAL, tester1, LocalDateTime.now());
         issueRepo.save(issue3);
 
-        searchService = new SearchService(issueRepo);
+        searchService = new SearchServiceImpl(issueRepo);
     }
 
     @AfterEach
