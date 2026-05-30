@@ -8,6 +8,7 @@ import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
 import issuetracker.repository.comment.CommentRepositoryImpl;
+import issuetracker.service.comment.CommentServiceImpl;
 import issuetracker.repository.issue.InMemoryIssueRepository;
 import org.junit.jupiter.api.*;
 
@@ -38,7 +39,7 @@ class CommentServiceTest {
         issueRepo.save(testIssue);
 
         CommentRepositoryImpl commentRepo = new CommentRepositoryImpl(connection);
-        commentService = new CommentService(commentRepo, issueRepo);
+        commentService = new CommentServiceImpl(commentRepo, issueRepo);
     }
 
     @AfterEach
