@@ -22,146 +22,146 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     private final RecommendationRepository recommendationRepository;
 
-        public RecommendationServiceImpl(RecommendationRepository recommendationRepository) {
-            this.recommendationRepository = recommendationRepository;
+    public RecommendationServiceImpl(RecommendationRepository recommendationRepository) {
+        this.recommendationRepository = recommendationRepository;
+    }
+
+    @Override
+    public List<Account> recommendAssignees(Issue issue, int limit) {
+        if (limit <= 0) {
+            return Collections.emptyList();
         }
 
-        @Override
-        public List<Account> recommendAssignees(Issue issue, int limit) {
-            if (limit <= 0) {
-                return Collections.emptyList();
+        Long projectId = issue.getProject().getId();
+
+        List<Account> developers = recommendationRepository.findDevelopers();
+        Map<Long, Long> fixedCounts = recommendationRepository.countFixedIssuesByDeveloper(projectId);
+        List<Issue> solvedIssues = recommendationRepository.findSolvedIssues(projectId);
+
+        Map<Long, Double> similarityScores = calculateSimilarityScores(issue, solvedIssues);
+
+        List<Account> candidates = new ArrayList<>();
+        for (Account developer : developers) {
+            if (developer.getRole() == Role.DEV) {
+                candidates.add(developer);
             }
-
-            Long projectId = issue.getProject().getId();
-
-            List<Account> developers = recommendationRepository.findDevelopers();
-            Map<Long, Long> fixedCounts = recommendationRepository.countFixedIssuesByDeveloper(projectId);
-            List<Issue> solvedIssues = recommendationRepository.findSolvedIssues(projectId);
-
-            Map<Long, Double> similarityScores = calculateSimilarityScores(issue, solvedIssues);
-
-            List<Account> candidates = new ArrayList<>();
-            for (Account developer : developers) {
-                if (developer.getRole() == Role.DEV) {
-                    candidates.add(developer);
-                }
-            }
-
-            candidates.sort(
-                    Comparator.<Account>comparingDouble(
-                                    developer -> calculateTotalScore(
-                                            developer,
-                                            fixedCounts,
-                                            similarityScores
-                                    )
-                            )
-                            .reversed()
-                            .thenComparing(developer -> Objects.toString(developer.getUsername(), ""))
-            );
-
-            if (candidates.size() > limit) {
-                return new ArrayList<>(candidates.subList(0, limit));
-            }
-
-            return candidates;
         }
 
-        private double calculateTotalScore(Account developer,
-                                           Map<Long, Long> fixedCounts,
-                                           Map<Long, Double> similarityScores) {
-            long fixedCount = fixedCounts.getOrDefault(developer.getId(), 0L);
-            double similarity = similarityScores.getOrDefault(developer.getId(), 0.0);
+        candidates.sort(
+                Comparator.<Account>comparingDouble(
+                                developer -> calculateTotalScore(
+                                        developer,
+                                        fixedCounts,
+                                        similarityScores
+                                )
+                        )
+                        .reversed()
+                        .thenComparing(developer -> Objects.toString(developer.getUsername(), ""))
+        );
 
-            return fixedCount * FIXED_COUNT_WEIGHT + similarity * SIMILARITY_WEIGHT;
+        if (candidates.size() > limit) {
+            return new ArrayList<>(candidates.subList(0, limit));
         }
 
-        private Map<Long, Double> calculateSimilarityScores(Issue targetIssue,
-                                                            List<Issue> solvedIssues) {
-            Map<Long, Double> result = new HashMap<>();
+        return candidates;
+    }
 
-            Map<String, Double> targetVector = toTermFrequencyVector(getIssueText(targetIssue));
+    private double calculateTotalScore(Account developer,
+                                       Map<Long, Long> fixedCounts,
+                                       Map<Long, Double> similarityScores) {
+        long fixedCount = fixedCounts.getOrDefault(developer.getId(), 0L);
+        double similarity = similarityScores.getOrDefault(developer.getId(), 0.0);
 
-            for (Issue solvedIssue : solvedIssues) {
-                if (solvedIssue.getFixer() == null) {
-                    continue;
-                }
+        return fixedCount * FIXED_COUNT_WEIGHT + similarity * SIMILARITY_WEIGHT;
+    }
 
-                Map<String, Double> solvedVector = toTermFrequencyVector(getIssueText(solvedIssue));
-                double similarity = calculateCosineSimilarity(targetVector, solvedVector);
+    private Map<Long, Double> calculateSimilarityScores(Issue targetIssue,
+                                                        List<Issue> solvedIssues) {
+        Map<Long, Double> result = new HashMap<>();
 
-                Long fixerId = solvedIssue.getFixer().getId();
-                result.put(fixerId, result.getOrDefault(fixerId, 0.0) + similarity);
+        Map<String, Double> targetVector = toTermFrequencyVector(getIssueText(targetIssue));
+
+        for (Issue solvedIssue : solvedIssues) {
+            if (solvedIssue.getFixer() == null) {
+                continue;
             }
 
-            return result;
+            Map<String, Double> solvedVector = toTermFrequencyVector(getIssueText(solvedIssue));
+            double similarity = calculateCosineSimilarity(targetVector, solvedVector);
+
+            Long fixerId = solvedIssue.getFixer().getId();
+            result.put(fixerId, result.getOrDefault(fixerId, 0.0) + similarity);
         }
 
-        private double calculateCosineSimilarity(Map<String, Double> vectorA,
-                                                 Map<String, Double> vectorB) {
-            Set<String> allWords = new HashSet<>();
-            allWords.addAll(vectorA.keySet());
-            allWords.addAll(vectorB.keySet());
+        return result;
+    }
 
-            double dotProduct = 0.0;
-            double normA = 0.0;
-            double normB = 0.0;
+    private double calculateCosineSimilarity(Map<String, Double> vectorA,
+                                             Map<String, Double> vectorB) {
+        Set<String> allWords = new HashSet<>();
+        allWords.addAll(vectorA.keySet());
+        allWords.addAll(vectorB.keySet());
 
-            for (String word : allWords) {
-                double a = vectorA.getOrDefault(word, 0.0);
-                double b = vectorB.getOrDefault(word, 0.0);
+        double dotProduct = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
 
-                dotProduct += a * b;
-                normA += a * a;
-                normB += b * b;
-            }
+        for (String word : allWords) {
+            double a = vectorA.getOrDefault(word, 0.0);
+            double b = vectorB.getOrDefault(word, 0.0);
 
-            if (normA == 0 || normB == 0) {
-                return 0.0;
-            }
-
-            return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+            dotProduct += a * b;
+            normA += a * a;
+            normB += b * b;
         }
 
-        private Map<String, Double> toTermFrequencyVector(String text) {
-            List<String> words = extractWords(text);
-            Map<String, Double> vector = new HashMap<>();
+        if (normA == 0 || normB == 0) {
+            return 0.0;
+        }
 
-            if (words.isEmpty()) {
-                return vector;
-            }
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
 
-            for (String word : words) {
-                vector.put(word, vector.getOrDefault(word, 0.0) + 1.0);
-            }
+    private Map<String, Double> toTermFrequencyVector(String text) {
+        List<String> words = extractWords(text);
+        Map<String, Double> vector = new HashMap<>();
 
-            for (String word : vector.keySet()) {
-                vector.put(word, vector.get(word) / words.size());
-            }
-
+        if (words.isEmpty()) {
             return vector;
         }
 
-        private String getIssueText(Issue issue) {
-            return issue.getTitle() + " " + issue.getDescription();
+        for (String word : words) {
+            vector.put(word, vector.getOrDefault(word, 0.0) + 1.0);
         }
 
-        private List<String> extractWords(String text) {
-            if (text == null || text.isBlank()) {
-                return List.of();
-            }
-
-            String normalized = text.toLowerCase()
-                    .replaceAll("[^a-zA-Z0-9가-힣 ]", " ");
-
-            String[] tokens = normalized.split("\\s+");
-
-            List<String> result = new ArrayList<>();
-            for (String token : tokens) {
-                if (token.length() >= 2) {
-                    result.add(token);
-                }
-            }
-
-            return result;
+        for (String word : vector.keySet()) {
+            vector.put(word, vector.get(word) / words.size());
         }
+
+        return vector;
+    }
+
+    private String getIssueText(Issue issue) {
+        return issue.getTitle() + " " + issue.getDescription();
+    }
+
+    private List<String> extractWords(String text) {
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
+
+        String normalized = text.toLowerCase()
+                .replaceAll("[^a-zA-Z0-9가-힣 ]", " ");
+
+        String[] tokens = normalized.split("\\s+");
+
+        List<String> result = new ArrayList<>();
+        for (String token : tokens) {
+            if (token.length() >= 2) {
+                result.add(token);
+            }
+        }
+
+        return result;
+    }
 }
