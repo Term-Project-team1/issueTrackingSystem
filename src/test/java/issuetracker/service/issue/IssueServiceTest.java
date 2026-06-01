@@ -7,6 +7,7 @@ import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -263,5 +264,29 @@ class IssueServiceTest {
         Issue reassignedIssue = issueService.viewIssue(issue.getId());
 
         assertEquals(IssueStatus.ASSIGNED, reassignedIssue.getStatus());
+    }
+
+    @Test
+    @DisplayName("findAll: 생성된 이슈 전체를 조회할 수 있다")
+    void findAll_생성된_이슈_전체조회() {
+        issueService.createIssue(
+                project1,
+                tester1,
+                "Login bug",
+                "Login fails",
+                Priority.MAJOR
+        );
+
+        issueService.createIssue(
+                project1,
+                tester1,
+                "Payment bug",
+                "Payment fails",
+                Priority.CRITICAL
+        );
+
+        List<Issue> issues = issueService.findAll();
+
+        assertEquals(2, issues.size());
     }
 }
