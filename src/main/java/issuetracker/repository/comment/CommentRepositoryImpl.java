@@ -1,7 +1,9 @@
 package issuetracker.repository.comment;
 
 import issuetracker.domain.account.Account;
+import issuetracker.domain.account.Role;
 import issuetracker.domain.comment.Comment;
+
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -53,7 +55,7 @@ public class CommentRepositoryImpl implements CommentRepository {
                 Account author = new Account(
                         rs.getLong("author_id"),
                         rs.getString("username"),
-                        null
+                        Role.valueOf(rs.getString("role"))
                 );
 
                 Comment c = new Comment();

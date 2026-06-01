@@ -16,11 +16,6 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepo;
     private final IssueRepository issueRepo;
 
-    public CommentServiceImpl() {
-        this.commentRepo = new CommentRepositoryImpl(null);
-        this.issueRepo = new IssueRepositoryImpl();
-    }
-
     public CommentServiceImpl(CommentRepository commentRepo, IssueRepository issueRepo) {
         this.commentRepo = commentRepo;
         this.issueRepo = issueRepo;
