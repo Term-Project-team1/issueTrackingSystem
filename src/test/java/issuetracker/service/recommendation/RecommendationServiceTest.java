@@ -116,10 +116,60 @@ class RecommendationServiceTest {
         assertTrue(result.stream().allMatch(a -> a.getRole() == Role.DEV));
     }
 
+    @Test
+    @DisplayName("recommendAssignees: 유사한 해결 이슈의 fixer가 우선 추천된다")
+    void recommendAssignees_유사도기반_fixer우선추천() {
+        issue = new Issue(
+                100L,
+                project,
+                "ui button color issue",
+                "button layout is broken",
+                IssueStatus.NEW,
+                Priority.MAJOR,
+                tester1,
+                LocalDateTime.now()
+        );
+
+        query.developers.addAll(List.of(dev1, dev2, dev3));
+
+        Issue solvedByDev2 = new Issue(
+                200L,
+                project,
+                "login token error",
+                "session token problem during login",
+                IssueStatus.RESOLVED,
+                Priority.MAJOR,
+                tester1,
+                LocalDateTime.now()
+        );
+        solvedByDev2.setFixer(dev2);
+
+        Issue solvedByDev3 = new Issue(
+                201L,
+                project,
+                "ui button color issue",
+                "button layout is broken",
+                IssueStatus.CLOSED,
+                Priority.MINOR,
+                tester1,
+                LocalDateTime.now()
+        );
+        solvedByDev3.setFixer(dev3);
+
+        query.solvedIssues.add(solvedByDev2);
+        query.solvedIssues.add(solvedByDev3);
+
+        List<Account> result = recommendationService.recommendAssignees(issue, 3);
+
+        assertFalse(result.isEmpty());
+        assertEquals(dev3, result.get(0));
+    }
+
     private static class FakeRecommendationRepository implements RecommendationRepository {
 
         final List<Account> developers = new ArrayList<>();
         final Map<Long, Long> fixedCounts = new HashMap<>();
+        final List<Issue> solvedIssues = new ArrayList<>();
 
         @Override
         public List<Account> findDevelopers() {
@@ -135,6 +185,11 @@ class RecommendationServiceTest {
         @Override
         public Map<Long, Long> countFixedIssuesByDeveloper(Long projectId) {
             return new HashMap<>(fixedCounts);
+        }
+
+        @Override
+        public List<Issue> findSolvedIssues(Long projectId) {
+            return new ArrayList<>(solvedIssues);
         }
     }
 }
