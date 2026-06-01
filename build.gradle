@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 group = 'issuetracker'
@@ -15,12 +16,18 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 }
 
+javafx {
+    version = '21.0.4'
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
 application {
-    mainClass = 'issuetracker.Main'
+    mainClass = 'issuetracker.ui.javafx.MainApp'
 }
 
 test {
     useJUnitPlatform()
 }
+
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17

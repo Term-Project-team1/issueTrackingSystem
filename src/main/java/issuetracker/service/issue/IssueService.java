@@ -4,6 +4,7 @@ import issuetracker.domain.account.Account;
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.Priority;
 import issuetracker.domain.project.Project;
+import java.util.List;
 
 public interface IssueService {
 
@@ -14,6 +15,8 @@ public interface IssueService {
                       Priority priority);
 
     Issue viewIssue(Long issueId);
+
+    List<Issue> findAll();
 
     void updateIssue(Long issueId,
                      String title,

@@ -9,6 +9,7 @@ import issuetracker.repository.issue.IssueRepository;
 import issuetracker.repository.issue.IssueRepositoryImpl;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class IssueServiceImpl implements IssueService {
 
@@ -52,6 +53,11 @@ public class IssueServiceImpl implements IssueService {
     public Issue viewIssue(Long issueId) {
         return issueRepository.findById(issueId)
                 .orElseThrow(() -> new IllegalArgumentException("Issue not found."));
+    }
+
+    @Override
+    public List<Issue> findAll() {
+        return issueRepository.findAll();
     }
 
     @Override
