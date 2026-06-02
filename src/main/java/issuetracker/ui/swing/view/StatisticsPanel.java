@@ -10,6 +10,9 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.LinkedHashMap;
 
 public class StatisticsPanel extends JPanel {
     private final AppControllers controllers;
@@ -37,7 +40,24 @@ public class StatisticsPanel extends JPanel {
                     .collect(java.util.stream.Collectors.toMap(entry -> UiFormat.username(entry.getKey()), Map.Entry::getValue)))));
             grid.add(SwingViewSupport.card("통계 요약", summary(controllers, projectId)));
         }
-        page.add(grid, BorderLayout.CENTER);
+        JPanel content = SwingViewSupport.strip();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+
+        content.add(grid);
+
+        if (project != null) {
+            Long projectId = project.getId();
+            content.add(Box.createVerticalStrut(18));
+            content.add(SwingViewSupport.card("일별 이슈 발생 수", new LineChartPanel(dailyCounts(projectId))));
+            content.add(Box.createVerticalStrut(18));
+            content.add(SwingViewSupport.card("월별 이슈 발생 수", new LineChartPanel(monthlyCounts(projectId))));
+        }
+
+        JScrollPane scrollPane = new JScrollPane(content);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        page.add(scrollPane, BorderLayout.CENTER);
         add(page, BorderLayout.CENTER);
         revalidate();
         repaint();
@@ -52,6 +72,28 @@ public class StatisticsPanel extends JPanel {
         panel.add(label("우선순위 집계: " + priorityTotal));
         panel.add(label("개발자 Fix 집계: " + controllers.statistics().countFixedIssuesByDeveloper(projectId).values().stream().mapToLong(Long::longValue).sum()));
         return panel;
+    }
+
+    private Map<String, Long> dailyCounts(Long projectId) {
+        YearMonth month = YearMonth.now();
+        Map<LocalDate, Long> raw = controllers.statistics().countIssuesByDay(projectId, month);
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (int day = 1; day <= month.lengthOfMonth(); day++) {
+            LocalDate date = month.atDay(day);
+            result.put(month.getMonthValue() + "/" + day, raw.getOrDefault(date, 0L));
+        }
+        return result;
+    }
+
+    private Map<String, Long> monthlyCounts(Long projectId) {
+        int year = YearMonth.now().getYear();
+        Map<YearMonth, Long> raw = controllers.statistics().countIssuesByMonth(projectId, year);
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (int month = 1; month <= 12; month++) {
+            YearMonth ym = YearMonth.of(year, month);
+            result.put(month + "월", raw.getOrDefault(ym, 0L));
+        }
+        return result;
     }
 
     private JLabel label(String text) {
@@ -137,7 +179,6 @@ public class StatisticsPanel extends JPanel {
             setPreferredSize(new Dimension(320, 240));
             animateIn();
         }
-
         private void animateIn() {
             Timer timer = new Timer(16, null);
             timer.addActionListener(event -> {
@@ -149,7 +190,6 @@ public class StatisticsPanel extends JPanel {
             });
             timer.start();
         }
-
         @Override
         protected void paintComponent(Graphics graphics) {
             super.paintComponent(graphics);
@@ -181,5 +221,70 @@ public class StatisticsPanel extends JPanel {
             }
             g2.dispose();
         }
+    }
+    private static final class LineChartPanel extends JPanel {
+        private final List<Map.Entry<String, Long>> entries;
+
+        private LineChartPanel(Map<String, Long> values) {
+            this.entries = new ArrayList<>(values.entrySet());
+            setOpaque(false);
+            setPreferredSize(new Dimension(900, 360));
+        }
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            super.paintComponent(graphics);
+
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int left = 54, top = 34, right = getWidth() - 28, bottom = getHeight() - 52;
+            long max = Math.max(1, entries.stream().mapToLong(Map.Entry::getValue).max().orElse(1));
+            int gap = Math.max(1, entries.size() - 1);
+            g2.setFont(g2.getFont().deriveFont(Font.BOLD, 12f));
+            for (int i = 0; i <= 5; i++) {
+                int y = bottom - i * (bottom - top) / 5;
+                g2.setColor(new Color(48, 55, 67));
+                g2.drawLine(left, y, right, y);
+                g2.setColor(issuetracker.ui.swing.layout.MainFrame.TEXT);
+                g2.drawString(String.valueOf(max * i / 5), left - 28, y + 4);
+            }
+            for (int i = 0; i < entries.size(); i++) {
+                int x = left + i * (right - left) / gap;
+                g2.setColor(new Color(48, 55, 67));
+                g2.drawLine(x, top, x, bottom);
+
+                if (entries.size() <= 12 || i % 2 == 0) {
+                    drawCentered(g2, entries.get(i).getKey(), x - 24, bottom + 22, 48,
+                            issuetracker.ui.swing.layout.MainFrame.MUTED);
+                }
+            }
+            g2.setColor(new Color(210, 216, 226));
+            g2.drawLine(left, bottom, right, bottom);
+            int prevX = -1;
+            int prevY = -1;
+            g2.setStroke(new BasicStroke(3f));
+            for (int i = 0; i < entries.size(); i++) {
+                long value = entries.get(i).getValue();
+                int x = left + i * (right - left) / gap;
+                int y = bottom - (int) Math.round(value * (bottom - top) / (double) max);
+                g2.setColor(new Color(255, 112, 55));
+                if (prevX >= 0) {
+                    g2.drawLine(prevX, prevY, x, y);
+                }
+                g2.setColor(Color.WHITE);
+                g2.fillOval(x - 6, y - 6, 12, 12);
+                g2.setColor(new Color(255, 112, 55));
+                g2.fillOval(x - 4, y - 4, 8, 8);
+                prevX = x;
+                prevY = y;
+            }
+            g2.dispose();
+        }
+    }
+
+    private static void drawCentered(Graphics2D g2, String text, int x, int y, int width, Color color) {
+        g2.setColor(color);
+        int textX = x + (width - g2.getFontMetrics().stringWidth(text)) / 2;
+        g2.drawString(text, textX, y);
     }
 }
