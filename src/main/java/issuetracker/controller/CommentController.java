@@ -3,7 +3,6 @@ package issuetracker.controller;
 import issuetracker.domain.comment.Comment;
 import issuetracker.domain.issue.Issue;
 import issuetracker.service.comment.CommentService;
-
 import java.util.List;
 
 public class CommentController {
@@ -25,4 +24,3 @@ public class CommentController {
         return commentService.findCommentsByIssue(issueId);
     }
 }
-

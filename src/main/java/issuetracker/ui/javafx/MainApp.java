@@ -14,7 +14,7 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) {
-        AppControllers controllers = AppControllerFactory.create();
+        AppControllers controllers = AppControllerFactory.createWithRealServices();
 
         MainLayout mainLayout = new MainLayout(controllers);
         Scene scene = new Scene(mainLayout, DEFAULT_WIDTH, DEFAULT_HEIGHT);

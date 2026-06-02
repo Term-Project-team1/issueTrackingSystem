@@ -4,6 +4,7 @@ import issuetracker.domain.account.Account;
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.project.Project;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

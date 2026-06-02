@@ -4,7 +4,6 @@ import issuetracker.domain.account.Account;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.domain.issue.Priority;
 import issuetracker.service.statistics.StatisticsService;
-
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Map;

@@ -3,7 +3,6 @@ package issuetracker.controller;
 import issuetracker.domain.account.Account;
 import issuetracker.domain.account.Role;
 import issuetracker.service.account.AccountService;
-
 import java.util.List;
 
 public class AccountController {
@@ -25,4 +24,3 @@ public class AccountController {
         return accountService.findByRole(role);
     }
 }
-

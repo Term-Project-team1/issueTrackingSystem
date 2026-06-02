@@ -1,13 +1,6 @@
 package issuetracker;
 
-import issuetracker.controller.AccountController;
-import issuetracker.controller.AppControllers;
-import issuetracker.controller.CommentController;
-import issuetracker.controller.IssueController;
-import issuetracker.controller.ProjectController;
-import issuetracker.controller.RecommendationController;
-import issuetracker.controller.SearchController;
-import issuetracker.controller.StatisticsController;
+import issuetracker.controller.*;
 import issuetracker.database.DatabaseInitializer;
 import issuetracker.database.SqliteConnectionManager;
 import issuetracker.repository.account.AccountRepository;
@@ -41,12 +34,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public final class AppControllerFactory {
-
     private AppControllerFactory() {
-    }
-
-    public static AppControllers create() {
-        return createWithRealServices();
     }
 
     public static AppControllers createWithRealServices() {
@@ -55,9 +43,9 @@ public final class AppControllerFactory {
         AccountRepository accountRepository = new AccountRepositoryImpl();
         ProjectRepository projectRepository = new ProjectRepositoryImpl();
         IssueRepository issueRepository = new IssueRepositoryImpl();
-        CommentRepository commentRepository = new CommentRepositoryImpl(openCommentConnection());
         StatisticsRepository statisticsRepository = new StatisticsRepositoryImpl();
         RecommendationRepository recommendationRepository = new RecommendationRepositoryImpl();
+        CommentRepository commentRepository = new CommentRepositoryImpl(openCommentConnection());
 
         AccountService accountService = new AccountServiceImpl(accountRepository);
         ProjectService projectService = new ProjectServiceImpl(projectRepository);
@@ -67,22 +55,14 @@ public final class AppControllerFactory {
         StatisticsService statisticsService = new StatisticsServiceImpl(statisticsRepository);
         RecommendationService recommendationService = new RecommendationServiceImpl(recommendationRepository);
 
-        AccountController accountController = new AccountController(accountService);
-        ProjectController projectController = new ProjectController(projectService);
-        IssueController issueController = new IssueController(issueService);
-        CommentController commentController = new CommentController(commentService);
-        SearchController searchController = new SearchController(searchService);
-        StatisticsController statisticsController = new StatisticsController(statisticsService);
-        RecommendationController recommendationController = new RecommendationController(recommendationService);
-
         return new AppControllers(
-                accountController,
-                projectController,
-                issueController,
-                commentController,
-                searchController,
-                statisticsController,
-                recommendationController
+                new AccountController(accountService),
+                new ProjectController(projectService),
+                new IssueController(issueService),
+                new CommentController(commentService),
+                new SearchController(searchService),
+                new StatisticsController(statisticsService),
+                new RecommendationController(recommendationService)
         );
     }
 
