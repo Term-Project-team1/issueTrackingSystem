@@ -76,7 +76,7 @@ public class SidebarPanel extends JPanel {
         }
         top.add(menu);
 
-        JLabel footer = new JLabel("●  시스템 정상");
+        JLabel footer = new JLabel();
         footer.setForeground(new Color(106, 195, 106));
         footer.setBorder(BorderFactory.createEmptyBorder(12, 20, 14, 20));
         add(top, BorderLayout.NORTH);
@@ -95,11 +95,6 @@ public class SidebarPanel extends JPanel {
                 BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
                 BorderFactory.createEmptyBorder(18, 14, 18, 14)
         ));
-        JLabel logo = SwingStyles.roundedLabel("<html><center>이슈<br>있슈</center></html>", new Color(255, 105, 100), 18);
-        logo.setHorizontalAlignment(SwingConstants.CENTER);
-        logo.setForeground(Color.WHITE);
-        logo.setFont(logo.getFont().deriveFont(Font.BOLD, 13f));
-        logo.setPreferredSize(new Dimension(36, 36));
         JPanel texts = new JPanel(new GridLayout(2, 1, 0, 3));
         texts.setOpaque(false);
         JLabel title = new JLabel("ITS");
@@ -109,7 +104,6 @@ public class SidebarPanel extends JPanel {
         sub.setForeground(MUTED);
         texts.add(title);
         texts.add(sub);
-        brand.add(logo);
         brand.add(texts);
         return brand;
     }
