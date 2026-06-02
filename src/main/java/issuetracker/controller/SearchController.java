@@ -3,7 +3,6 @@ package issuetracker.controller;
 import issuetracker.domain.issue.Issue;
 import issuetracker.domain.issue.IssueStatus;
 import issuetracker.service.search.SearchService;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;

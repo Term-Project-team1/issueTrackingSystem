@@ -2,7 +2,6 @@ package issuetracker.controller;
 
 import issuetracker.domain.project.Project;
 import issuetracker.service.project.ProjectService;
-
 import java.util.List;
 
 public class ProjectController {

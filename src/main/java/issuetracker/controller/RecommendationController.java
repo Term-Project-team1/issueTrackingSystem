@@ -3,7 +3,6 @@ package issuetracker.controller;
 import issuetracker.domain.account.Account;
 import issuetracker.domain.issue.Issue;
 import issuetracker.service.recommendation.RecommendationService;
-
 import java.util.List;
 
 public class RecommendationController {
