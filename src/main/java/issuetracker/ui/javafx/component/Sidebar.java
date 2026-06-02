@@ -11,21 +11,12 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class Sidebar extends VBox {
-
-    public enum MenuItem {
-        DASHBOARD,
-        PROJECTS,
-        ISSUES,
-        ACCOUNTS,
-        STATISTICS
-    }
-
+    public enum MenuItem {DASHBOARD, PROJECTS, ISSUES, ACCOUNTS, STATISTICS}
     private final Consumer<MenuItem> onMenuSelected;
     private final Map<MenuItem, Button> menuButtons = new EnumMap<>(MenuItem.class);
 
     public Sidebar(Consumer<MenuItem> onMenuSelected) {
         this.onMenuSelected = onMenuSelected;
-
         getStyleClass().add("sidebar");
         setPadding(new Insets(28, 18, 18, 18));
         setSpacing(14);
@@ -39,15 +30,7 @@ public class Sidebar extends VBox {
         Button accountButton = createMenuButton(MenuItem.ACCOUNTS, "A  Accounts");
         Button statisticsButton = createMenuButton(MenuItem.STATISTICS, "S  Statistics");
 
-        VBox menuBox = new VBox(
-                8,
-                dashboardButton,
-                projectButton,
-                issueButton,
-                accountButton,
-                statisticsButton
-        );
-
+        VBox menuBox = new VBox(8, dashboardButton, projectButton, issueButton, accountButton, statisticsButton);
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
@@ -57,7 +40,6 @@ public class Sidebar extends VBox {
     private VBox createBrand() {
         Label logo = new Label("ITS");
         logo.getStyleClass().add("sidebar-logo");
-
         Label subtitle = new Label("Issue Tracking System");
         subtitle.getStyleClass().add("sidebar-subtitle");
 
@@ -72,13 +54,11 @@ public class Sidebar extends VBox {
         Button button = new Button(text);
         button.getStyleClass().add("sidebar-button");
         button.setMaxWidth(Double.MAX_VALUE);
-
         button.setOnAction(event -> {
             if (onMenuSelected != null) {
                 onMenuSelected.accept(menuItem);
             }
         });
-
         menuButtons.put(menuItem, button);
 
         return button;
@@ -87,7 +67,6 @@ public class Sidebar extends VBox {
     public void select(MenuItem selectedMenuItem) {
         for (Map.Entry<MenuItem, Button> entry : menuButtons.entrySet()) {
             Button button = entry.getValue();
-
             button.getStyleClass().remove("selected");
 
             if (entry.getKey() == selectedMenuItem) {

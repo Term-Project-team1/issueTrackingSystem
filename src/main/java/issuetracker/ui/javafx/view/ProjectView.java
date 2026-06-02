@@ -9,6 +9,7 @@ import issuetracker.ui.UiSession;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -18,11 +19,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class ProjectView extends VBox {
-
     private final AppControllers controllers;
     private final UiSession session;
     private final ObservableList<String> projects = FXCollections.observableArrayList();
-
     private TextField nameField;
     private Button createButton;
     private Label messageLabel;
@@ -34,153 +33,93 @@ public class ProjectView extends VBox {
         getStyleClass().add("content");
         setSpacing(18);
         setPadding(new Insets(28));
-
-        Label title = new Label("Projects");
-        title.getStyleClass().add("page-title");
-
-        HBox body = new HBox(18, createProjectList(), createProjectForm());
+        HBox body = new HBox(18, projectList(), projectForm());
         VBox.setVgrow(body, Priority.ALWAYS);
 
-        messageLabel = new Label("");
-        messageLabel.getStyleClass().add("field-label");
-
-        getChildren().addAll(title, body, messageLabel);
-
+        messageLabel = label("", "field-label");
+        getChildren().addAll(label("Projects", "page-title"), body, messageLabel);
         refreshProjects();
-        updateProjectActions();
+        updateActions();
     }
 
-    private VBox createProjectList() {
-        ListView<String> listView = new ListView<>(projects);
-        listView.getStyleClass().add("data-list");
-
-        VBox panel = createPanel("Project 목록", listView);
+    private VBox projectList() {
+        ListView<String> list = new ListView<>(projects);
+        list.getStyleClass().add("data-list");
+        VBox panel = panel("Project 목록", list);
         HBox.setHgrow(panel, Priority.ALWAYS);
-
         return panel;
     }
 
-    private VBox createProjectForm() {
+    private VBox projectForm() {
         nameField = new TextField();
         nameField.setPromptText("project name");
-
         createButton = new Button("Create Project");
         createButton.getStyleClass().add("primary-button");
         createButton.setMaxWidth(Double.MAX_VALUE);
         createButton.setOnAction(event -> createProject());
 
-        VBox form = new VBox(
-                12,
-                fieldLabel("Name"),
-                nameField,
-                createButton
-        );
-
+        VBox form = new VBox(12, label("Name", "field-label"), nameField, createButton);
         form.getStyleClass().add("panel");
         form.setPadding(new Insets(18));
         form.setPrefWidth(360);
-
         return form;
     }
 
     private void createProject() {
-        if (!isAdmin()) {
-            showMessage("프로젝트 생성은 ADMIN만 가능합니다.");
-            return;
-        }
-
-        String projectName = nameField.getText();
-
-        if (projectName == null || projectName.isBlank()) {
-            showMessage("프로젝트 이름을 입력하세요.");
+        String name = nameField.getText();
+        if (!isAdmin() || name == null || name.isBlank()) {
             return;
         }
 
         try {
-            Project createdProject = controllers.project().createProject(projectName);
-
-            session.selectProject(createdProject);
-
+            Project project = controllers.project().createProject(name);
+            session.selectProject(project);
             nameField.clear();
             refreshProjects();
-
-            showMessage(currentUsername() + "이 " + projectName + "을 추가했습니다.");
-
-        } catch (Exception e) {
-            showMessage("프로젝트 생성 실패: " + e.getMessage());
-            e.printStackTrace();
+            show(currentUsername() + " - " + name + " 추가되었습니다.");
+        } catch (Exception ignored) {
         }
     }
 
     private void refreshProjects() {
         projects.setAll(
-                controllers.project()
-                        .findAll()
-                        .stream()
-                        .map(this::formatProject)
-                        .toList()
+                controllers.project().findAll().stream().map(UiFormat::projectWithId).toList()
         );
     }
-
-    private void updateProjectActions() {
-        boolean canCreateProject = isAdmin();
-
+    private void updateActions() {
         if (createButton != null) {
-            createButton.setDisable(!canCreateProject);
+            createButton.setDisable(!isAdmin());
         }
-
-        if (canCreateProject) {
-            showMessage("현재 계정 " + currentUsername() + "은 프로젝트를 생성할 수 있습니다.");
-        } else {
-            showMessage("현재 계정 " + currentUsername() + "은 프로젝트를 생성할 수 없습니다. ADMIN만 가능합니다.");
-        }
-    }
-
-    private String formatProject(Project project) {
-        return UiFormat.projectWithId(project);
     }
 
     private boolean isAdmin() {
-        Account currentUser = session.getCurrentUser();
-
-        return currentUser != null
-                && currentUser.getRole() == Role.ADMIN;
+        Account user = session.getCurrentUser();
+        return user != null && user.getRole() == Role.ADMIN;
     }
 
     private String currentUsername() {
-        Account currentUser = session.getCurrentUser();
-
-        if (currentUser == null || currentUser.getUsername() == null) {
-            return "-";
-        }
-
-        return currentUser.getUsername();
+        Account user = session.getCurrentUser();
+        return user == null || user.getUsername() == null ? "-" : user.getUsername();
     }
 
-    private Label fieldLabel(String text) {
+    private Label label(String text, String style) {
         Label label = new Label(text);
-        label.getStyleClass().add("field-label");
+        label.getStyleClass().add(style);
         return label;
     }
 
-    private VBox createPanel(String title, javafx.scene.Node content) {
-        Label titleNode = new Label(title);
-        titleNode.getStyleClass().add("panel-title");
-
-        VBox panel = new VBox(14, titleNode, content);
+    private VBox panel(String title, Node content) {
+        VBox panel = new VBox(14, label(title, "panel-title"), content);
         panel.getStyleClass().add("panel");
         panel.setPadding(new Insets(18));
-
         VBox.setVgrow(content, Priority.ALWAYS);
-
         return panel;
     }
 
-    private void showMessage(String message) {
+    private void show(String message) {
         if (messageLabel != null) {
             messageLabel.setText(message);
         }
-
         System.out.println(message);
     }
 }

@@ -17,6 +17,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.geometry.Pos;
 
 import java.util.List;
 
@@ -25,7 +26,6 @@ public class MainLayout extends BorderPane {
     private final Sidebar sidebar;
     private final AppControllers controllers;
     private final UiSession session;
-
     private Sidebar.MenuItem currentMenuItem = Sidebar.MenuItem.DASHBOARD;
 
     public MainLayout(AppControllers controllers) {
@@ -37,10 +37,8 @@ public class MainLayout extends BorderPane {
         initializeSession();
 
         sidebar = new Sidebar(this::showView);
-
         setTop(createTopBar());
         setLeft(sidebar);
-
         showView(Sidebar.MenuItem.DASHBOARD);
     }
 
@@ -48,10 +46,7 @@ public class MainLayout extends BorderPane {
         try {
             List<Account> accounts = controllers.account().findAll();
 
-            Account defaultUser = accounts.stream()
-                    .filter(account -> account != null && "admin".equalsIgnoreCase(account.getUsername()))
-                    .findFirst()
-                    .orElse(accounts.isEmpty() ? null : accounts.get(0));
+            Account defaultUser = accounts.stream().filter(account -> account != null && "admin".equalsIgnoreCase(account.getUsername())).findFirst().orElse(accounts.isEmpty() ? null : accounts.get(0));
 
             if (defaultUser != null) {
                 session.selectCurrentUser(defaultUser);
@@ -120,8 +115,11 @@ public class MainLayout extends BorderPane {
         });
 
         HBox topBar = new HBox(12, userLabel, currentUserBox, roleLabel);
-        topBar.getStyleClass().add("panel");
-        topBar.setPadding(new Insets(12));
+        topBar.getStyleClass().addAll("top-bar", "panel");
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(12, 16, 12, 16));
+        topBar.setMinHeight(72);
+        topBar.setPrefHeight(72);
 
         return topBar;
     }

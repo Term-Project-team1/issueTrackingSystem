@@ -11,54 +11,32 @@ import issuetracker.ui.UiSession;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextArea;
+import javafx.scene.Node;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class IssueDetailView extends VBox {
-
+    private static final String[] ACTIONS = {"Recommend", "Assign", "Mark Fixed", "Resolve", "Close", "Reopen", "Comment"};
     private final AppControllers controllers;
     private final UiSession session;
     private final Runnable onIssueChanged;
-
-    private Issue issue;
-
-    private final Label title = new Label("No issue selected");
-    private final Label message = new Label("");
-
-    private final Label description = new Label("-");
-    private final Label status = new Label("-");
-    private final Label priority = new Label("-");
-    private final Label reporter = new Label("-");
-    private final Label assignee = new Label("-");
-    private final Label fixer = new Label("-");
-    private final Label availableActions = new Label("Available actions: -");
-
-    private final ComboBox<Account> assigneeBox = new ComboBox<>();
     private final ObservableList<String> comments = FXCollections.observableArrayList();
     private final ObservableList<String> recommendations = FXCollections.observableArrayList();
 
-    private final ListView<String> commentList = new ListView<>(comments);
-    private final ListView<String> recommendationList = new ListView<>(recommendations);
-
+    private Issue issue;
+    private final Label title = detail("No issue selected", "detail-title"), message = label("", "field-label");
+    private final Label actions = label("Available actions: -", "field-label");
+    private final Label description = detail("-", "detail-value"), status = detail("-", "detail-value");
+    private final Label priority = detail("-", "detail-value"), reporter = detail("-", "detail-value");
+    private final Label assignee = detail("-", "detail-value"), fixer = detail("-", "detail-value");
+    private final ComboBox<Account> assigneeBox = new ComboBox<>();
     private final TextArea commentArea = new TextArea();
-
-    private Button recommendButton;
-    private Button assignButton;
-    private Button markFixedButton;
-    private Button resolveButton;
-    private Button closeButton;
-    private Button reopenButton;
-    private Button addCommentButton;
+    private Button recommendButton, assignButton, fixedButton, resolveButton, closeButton, reopenButton, commentButton;
 
     public IssueDetailView(AppControllers controllers, UiSession session) {
         this(controllers, session, () -> {
@@ -68,537 +46,263 @@ public class IssueDetailView extends VBox {
     public IssueDetailView(AppControllers controllers, UiSession session, Runnable onIssueChanged) {
         this.controllers = controllers;
         this.session = session;
-        this.onIssueChanged = onIssueChanged == null ? () -> {
-        } : onIssueChanged;
-
+        this.onIssueChanged = onIssueChanged == null ? () -> {} : onIssueChanged;
         getStyleClass().add("panel");
         setPadding(new Insets(18));
         setSpacing(12);
         setPrefWidth(380);
-
         createView();
         loadAssignees();
         showIssue(null);
     }
 
     private void createView() {
-        Label panelTitle = new Label("Issue Detail");
-        panelTitle.getStyleClass().add("panel-title");
-
-        title.getStyleClass().add("detail-title");
-        title.setWrapText(true);
-
-        availableActions.getStyleClass().add("field-label");
-        message.getStyleClass().add("field-label");
-
-        description.setWrapText(true);
-        description.getStyleClass().add("detail-value");
-        status.getStyleClass().add("detail-value");
-        priority.getStyleClass().add("detail-value");
-        reporter.getStyleClass().add("detail-value");
-        assignee.getStyleClass().add("detail-value");
-        fixer.getStyleClass().add("detail-value");
-
         assigneeBox.setMaxWidth(Double.MAX_VALUE);
-        assigneeBox.setConverter(new javafx.util.StringConverter<>() {
-            @Override
-            public String toString(Account account) {
-                return UiFormat.account(account);
-            }
-
-            @Override
-            public Account fromString(String string) {
-                return null;
-            }
-        });
-
-        recommendButton = new Button("Recommend Assignee");
-        recommendButton.getStyleClass().add("secondary-button");
+        assigneeBox.setConverter(accountConverter());
+        recommendButton = button("Recommend Assignee", "secondary-button", e -> recommend());
+        assignButton = button("Assign", "primary-button", e -> assign());
+        fixedButton = button("Mark Fixed", "secondary-button", e -> change("Marked as FIXED.", "Failed to mark fixed: ", (id, user) -> controllers.issue().markFixed(id, user)));
+        resolveButton = button("Resolve", "secondary-button", e -> change("Resolved.", "Failed to resolve: ", (id, user) -> controllers.issue().resolveIssue(id, user)));
+        closeButton = button("Close", "danger-button", e -> change("Closed.", "Close failed: ", (id, user) -> controllers.issue().closeIssue(id, user)));
+        reopenButton = button("Reopen", "secondary-button", e -> change("Reopened.", "Reopen failed: ", (id, user) -> controllers.issue().reopenIssue(id, user)));
+        commentButton = button("Add Comment", "primary-button", e -> addComment());
         recommendButton.setMaxWidth(Double.MAX_VALUE);
-        recommendButton.setOnAction(event -> recommendAssignees());
-
-        assignButton = new Button("Assign");
-        assignButton.getStyleClass().add("primary-button");
-        assignButton.setOnAction(event -> assignIssue());
-
-        markFixedButton = new Button("Mark Fixed");
-        markFixedButton.getStyleClass().add("secondary-button");
-        markFixedButton.setOnAction(event -> markFixed());
-
-        resolveButton = new Button("Resolve");
-        resolveButton.getStyleClass().add("secondary-button");
-        resolveButton.setOnAction(event -> resolveIssue());
-
-        closeButton = new Button("Close");
-        closeButton.getStyleClass().add("danger-button");
-        closeButton.setOnAction(event -> closeIssue());
-
-        reopenButton = new Button("Reopen");
-        reopenButton.getStyleClass().add("secondary-button");
-        reopenButton.setOnAction(event -> reopenIssue());
-
-        addCommentButton = new Button("Add Comment");
-        addCommentButton.getStyleClass().add("primary-button");
-        addCommentButton.setMaxWidth(Double.MAX_VALUE);
-        addCommentButton.setOnAction(event -> addComment());
-
+        commentButton.setMaxWidth(Double.MAX_VALUE);
         commentArea.setPromptText("comment");
-        commentArea.setWrapText(true);
         commentArea.setPrefRowCount(3);
-
-        commentList.getStyleClass().add("data-list");
-        commentList.setPrefHeight(150);
-
-        recommendationList.getStyleClass().add("data-list");
-        recommendationList.setPrefHeight(90);
+        commentArea.setWrapText(true);
 
         HBox assignRow = new HBox(10, assigneeBox, assignButton);
         HBox.setHgrow(assigneeBox, Priority.ALWAYS);
-
-        HBox actionRow1 = new HBox(10, markFixedButton, resolveButton);
-        HBox actionRow2 = new HBox(10, closeButton, reopenButton);
-
-        getChildren().addAll(
-                panelTitle,
-                availableActions,
-                title,
-                field("Description", description),
-                field("Status", status),
-                field("Priority", priority),
-                field("Reporter", reporter),
-                field("Assignee", assignee),
-                field("Fixer", fixer),
-                recommendButton,
-                field("추천 후보 Top3", recommendationList),
-                assignRow,
-                actionRow1,
-                actionRow2,
-                field("Comments", commentList),
-                commentArea,
-                addCommentButton,
-                message
-        );
+        getChildren().addAll(label("Issue Detail", "panel-title"), actions, field("Title",title),
+                field("Description", description), field("Status", status), field("Priority", priority),
+                field("Reporter", reporter), field("Assignee", assignee), field("Fixer", fixer),
+                recommendButton, field("Recommended Candidates Top3", list(recommendations, 90)), assignRow,
+                new HBox(10, fixedButton, resolveButton), new HBox(10, closeButton, reopenButton),
+                field("Comments", list(comments, 150)), commentArea, commentButton, message);
     }
 
     public void showIssue(Issue selectedIssue) {
-        this.issue = selectedIssue;
-
-        if (selectedIssue == null) {
-            title.setText("No issue selected");
-            description.setText("-");
-            status.setText("-");
-            priority.setText("-");
-            reporter.setText("-");
-            assignee.setText("-");
-            fixer.setText("-");
+        issue = selectedIssue;
+        if (issue == null) {
+            setDetail("No issue selected", "-", "-", "-", "-", "-", "-");
             comments.setAll("No comments");
             recommendations.clear();
-            updateAvailableActions();
-            return;
+        } else {
+            setDetail(safe(issue.getTitle()), safe(issue.getDescription()), name(issue.getStatus()), name(issue.getPriority()),
+                    UiFormat.account(issue.getReporter()), UiFormat.account(issue.getAssignee()), UiFormat.account(issue.getFixer()));
+            selectAssignee();
+            loadComments();
         }
-
-        title.setText(safe(selectedIssue.getTitle()));
-        description.setText(safe(selectedIssue.getDescription()));
-        status.setText(selectedIssue.getStatus() == null ? "-" : selectedIssue.getStatus().name());
-        priority.setText(selectedIssue.getPriority() == null ? "-" : selectedIssue.getPriority().name());
-        reporter.setText(UiFormat.account(selectedIssue.getReporter()));
-        assignee.setText(UiFormat.account(selectedIssue.getAssignee()));
-        fixer.setText(UiFormat.account(selectedIssue.getFixer()));
-
-        selectCurrentAssignee();
-        loadComments();
-        updateAvailableActions();
+        updateActions();
     }
 
     public Issue getIssue() {
         return issue;
     }
 
-    private void loadAssignees() {
+    public void loadAssignees() {
         try {
             List<Account> developers = controllers.account().findByRole(Role.DEV);
             assigneeBox.setItems(FXCollections.observableArrayList(developers));
-
-            if (!developers.isEmpty()) {
-                assigneeBox.setValue(developers.get(0));
-            }
-
+            if (!developers.isEmpty()) assigneeBox.setValue(developers.get(0));
         } catch (Exception e) {
-            showMessage("개발자 목록을 불러오지 못했습니다: " + e.getMessage(), true);
-            e.printStackTrace();
-        }
-    }
-
-    private void selectCurrentAssignee() {
-        if (issue == null || issue.getAssignee() == null) {
-            return;
-        }
-
-        for (Account account : assigneeBox.getItems()) {
-            if (sameAccount(account, issue.getAssignee())) {
-                assigneeBox.setValue(account);
-                return;
-            }
+            show("개발자 목록을 불러오지 못했습니다: " + e.getMessage(), true);
         }
     }
 
     private void loadComments() {
-        if (issue == null || issue.getId() == null) {
+        if (!hasIssue()) {
             comments.setAll("No comments");
             return;
         }
-
         try {
-            List<Comment> loadedComments = controllers.comment().findCommentsByIssue(issue.getId());
-
-            if (loadedComments.isEmpty()) {
-                comments.setAll("No comments");
-                return;
-            }
-
-            comments.setAll(
-                    loadedComments.stream()
-                            .map(this::formatComment)
-                            .toList()
-            );
-
+            List<Comment> loaded = controllers.comment().findCommentsByIssue(issue.getId());
+            comments.setAll(loaded.isEmpty() ? List.of("No comments") : loaded.stream().map(this::commentText).toList());
         } catch (Exception e) {
             comments.setAll("Failed to load comments: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    private void recommendAssignees() {
-        if (issue == null) {
-            showMessage("이슈를 먼저 선택하세요.", true);
-            return;
-        }
-
+    private void recommend() {
+        if (!hasIssue()) return;
         try {
             List<Account> candidates = controllers.recommendation().recommendAssignees(issue, 3);
-
             if (candidates.isEmpty()) {
                 recommendations.setAll("추천 후보가 없습니다.");
-                showMessage("추천 후보가 없습니다.", true);
+                show("추천 후보가 없습니다.", true);
                 return;
             }
-
-            recommendations.setAll(
-                    candidates.stream()
-                            .map(UiFormat::account)
-                            .toList()
-            );
-
+            recommendations.setAll(candidates.stream().map(UiFormat::account).toList());
             assigneeBox.setValue(candidates.get(0));
-
-            List<String> names = candidates.stream()
-                    .map(UiFormat::username)
-                    .toList();
-
-            showMessage("Best candidate: " + String.join(", ", names), false);
-
+            show("Best candidate: " + String.join(", ", candidates.stream().map(UiFormat::username).toList()), false);
         } catch (Exception e) {
             recommendations.setAll("추천 실패: " + e.getMessage());
-            showMessage("추천 실패: " + e.getMessage(), true);
-            e.printStackTrace();
+            show("추천 실패: " + e.getMessage(), true);
         }
     }
 
-    private void assignIssue() {
-        if (issue == null || issue.getId() == null) {
-            showMessage("이슈를 먼저 선택하세요.", true);
-            return;
-        }
-
-        Account assignee = assigneeBox.getValue();
-        Account currentUser = session.getCurrentUser();
-
-        if (assignee == null) {
-            showMessage("담당 개발자를 선택하세요.", true);
-            return;
-        }
-
-        if (currentUser == null) {
-            showMessage("현재 사용자를 선택하세요.", true);
-            return;
-        }
-
+    private void assign() {
+        Account user = session.getCurrentUser(), assignee = assigneeBox.getValue();
+        if (!hasIssue() || user == null || user.getId() == null || assignee == null) return;
         try {
-            controllers.issue().assignIssue(issue.getId(), assignee, currentUser);
-            reloadCurrentIssue();
-            showMessage("Assignee updated.", false);
-            onIssueChanged.run();
-
+            controllers.issue().assignIssue(issue.getId(), assignee, user);
+            afterChange("Assignee updated.");
         } catch (Exception e) {
-            showMessage("Failed to assign: " + e.getMessage(), true);
-            e.printStackTrace();
+            show("Failed to assign: " + e.getMessage(), true);
         }
     }
 
-    private void markFixed() {
-        if (!hasIssueAndUser()) {
-            return;
-        }
-
+    private void change(String success, String error, IssueAction action) {
+        if (!hasIssueAndUser()) return;
         try {
-            controllers.issue().markFixed(issue.getId(), session.getCurrentUser());
-            reloadCurrentIssue();
-            showMessage("Marked as FIXED.", false);
-            onIssueChanged.run();
-
+            action.apply(issue.getId(), session.getCurrentUser());
+            afterChange(success);
         } catch (Exception e) {
-            showMessage("Failed to mark fixed: " + e.getMessage(), true);
-            e.printStackTrace();
-        }
-    }
-
-    private void resolveIssue() {
-        if (!hasIssueAndUser()) {
-            return;
-        }
-
-        try {
-            controllers.issue().resolveIssue(issue.getId(), session.getCurrentUser());
-            reloadCurrentIssue();
-            showMessage("Resolved.", false);
-            onIssueChanged.run();
-
-        } catch (Exception e) {
-            showMessage("Failed to resolve: " + e.getMessage(), true);
-            e.printStackTrace();
-        }
-    }
-
-    private void closeIssue() {
-        if (!hasIssueAndUser()) {
-            return;
-        }
-
-        try {
-            controllers.issue().closeIssue(issue.getId(), session.getCurrentUser());
-            reloadCurrentIssue();
-            showMessage("Closed.", false);
-            onIssueChanged.run();
-
-        } catch (Exception e) {
-            showMessage("Close failed: " + e.getMessage(), true);
-            e.printStackTrace();
-        }
-    }
-
-    private void reopenIssue() {
-        if (!hasIssueAndUser()) {
-            return;
-        }
-
-        try {
-            controllers.issue().reopenIssue(issue.getId(), session.getCurrentUser());
-            reloadCurrentIssue();
-            showMessage("Reopened.", false);
-            onIssueChanged.run();
-
-        } catch (Exception e) {
-            showMessage("Reopen failed: " + e.getMessage(), true);
-            e.printStackTrace();
+            show(error + e.getMessage(), true);
         }
     }
 
     private void addComment() {
-        if (!hasIssueAndUser()) {
-            return;
-        }
-
+        if (!hasIssueAndUser()) return;
         String content = commentArea.getText();
-
         if (content == null || content.isBlank()) {
-            showMessage("Comment cannot be empty.", true);
+            show("Comment cannot be empty.", true);
             return;
         }
-
         try {
-            controllers.comment().addComment(
-                    issue.getId(),
-                    session.getCurrentUser().getId(),
-                    content
-            );
-
+            controllers.comment().addComment(issue.getId(), session.getCurrentUser().getId(), content);
             commentArea.clear();
             loadComments();
-
-            showMessage("Comment added.", false);
+            show("Comment added.", false);
             onIssueChanged.run();
-
         } catch (Exception e) {
-            showMessage("Failed to add comment: " + e.getMessage(), true);
-            e.printStackTrace();
+            show("Failed to add comment: " + e.getMessage(), true);
         }
     }
 
-    private void reloadCurrentIssue() {
-        if (issue == null || issue.getId() == null) {
-            return;
-        }
-
+    private void afterChange(String text) {
         try {
-            Issue reloaded = controllers.issue().viewIssue(issue.getId());
-            showIssue(reloaded);
-
+            showIssue(controllers.issue().viewIssue(issue.getId()));
+            show(text, false);
+            onIssueChanged.run();
         } catch (Exception e) {
-            showMessage("이슈 새로고침 실패: " + e.getMessage(), true);
-            e.printStackTrace();
+            show("이슈 새로고침 실패: " + e.getMessage(), true);
         }
+    }
+
+    private void updateActions() {
+        Account user = session.getCurrentUser();
+        IssueStatus state = issue == null ? null : issue.getStatus();
+        boolean admin = role(user, Role.ADMIN), pl = role(user, Role.PL), dev = role(user, Role.DEV), tester = role(user, Role.TESTER);
+        boolean[] enabled = {issue != null && user != null && (pl || admin),
+                issue != null && user != null && (pl || admin) && (state == IssueStatus.NEW || state == IssueStatus.REOPENED),
+                issue != null && user != null && dev && state == IssueStatus.ASSIGNED && same(user, issue.getAssignee()),
+                issue != null && user != null && (tester || admin) && state == IssueStatus.FIXED,
+                issue != null && user != null && (pl || admin) && state == IssueStatus.RESOLVED,
+                issue != null && user != null && (tester || pl || admin) && (state == IssueStatus.CLOSED || state == IssueStatus.RESOLVED),
+                issue != null && user != null};
+        Button[] buttons = {recommendButton, assignButton, fixedButton, resolveButton, closeButton, reopenButton, commentButton};
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < enabled.length; i++) {
+            buttons[i].setDisable(!enabled[i]);
+            if (enabled[i]) names.add(ACTIONS[i]);
+        }
+        actions.setText("Available actions: " + (names.isEmpty() ? "-" : String.join(", ", names)));
+    }
+
+    private boolean hasIssue() {
+        return issue != null && issue.getId() != null;
     }
 
     private boolean hasIssueAndUser() {
-        if (issue == null || issue.getId() == null) {
-            showMessage("이슈를 먼저 선택하세요.", true);
-            return false;
-        }
-
-        if (session.getCurrentUser() == null || session.getCurrentUser().getId() == null) {
-            showMessage("현재 사용자를 선택하세요.", true);
-            return false;
-        }
-
-        return true;
+        Account user = session.getCurrentUser();
+        return hasIssue() && user != null && user.getId() != null;
     }
 
-    private void updateAvailableActions() {
-        Account currentUser = session.getCurrentUser();
-        IssueStatus currentStatus = issue == null ? null : issue.getStatus();
-
-        boolean hasIssue = issue != null;
-        boolean hasUser = currentUser != null;
-
-        boolean isAdmin = hasRole(currentUser, Role.ADMIN);
-        boolean isPL = hasRole(currentUser, Role.PL);
-        boolean isDev = hasRole(currentUser, Role.DEV);
-        boolean isTester = hasRole(currentUser, Role.TESTER);
-
-        boolean canRecommend = hasIssue && hasUser && (isPL || isAdmin);
-        boolean canAssign = hasIssue && hasUser && (isPL || isAdmin)
-                && (currentStatus == IssueStatus.NEW || currentStatus == IssueStatus.REOPENED);
-
-        boolean canMarkFixed = hasIssue && hasUser && isDev
-                && currentStatus == IssueStatus.ASSIGNED
-                && sameAccount(currentUser, issue.getAssignee());
-
-        boolean canResolve = hasIssue && hasUser && (isTester || isAdmin)
-                && currentStatus == IssueStatus.FIXED;
-
-        boolean canClose = hasIssue && hasUser && (isPL || isAdmin)
-                && currentStatus == IssueStatus.RESOLVED;
-
-        boolean canReopen = hasIssue && hasUser && (isTester || isPL || isAdmin)
-                && (currentStatus == IssueStatus.CLOSED || currentStatus == IssueStatus.RESOLVED);
-
-        boolean canComment = hasIssue && hasUser;
-
-        setDisabled(recommendButton, !canRecommend);
-        setDisabled(assignButton, !canAssign);
-        setDisabled(markFixedButton, !canMarkFixed);
-        setDisabled(resolveButton, !canResolve);
-        setDisabled(closeButton, !canClose);
-        setDisabled(reopenButton, !canReopen);
-        setDisabled(addCommentButton, !canComment);
-
-        availableActions.setText("Available actions: " + buildAvailableActionsText(
-                canRecommend,
-                canAssign,
-                canMarkFixed,
-                canResolve,
-                canClose,
-                canReopen,
-                canComment
-        ));
-    }
-
-    private String buildAvailableActionsText(boolean canRecommend,
-                                             boolean canAssign,
-                                             boolean canMarkFixed,
-                                             boolean canResolve,
-                                             boolean canClose,
-                                             boolean canReopen,
-                                             boolean canComment) {
-        List<String> actions = new ArrayList<>();
-
-        if (canRecommend) {
-            actions.add("Recommend");
-        }
-        if (canAssign) {
-            actions.add("Assign");
-        }
-        if (canMarkFixed) {
-            actions.add("Mark Fixed");
-        }
-        if (canResolve) {
-            actions.add("Resolve");
-        }
-        if (canClose) {
-            actions.add("Close");
-        }
-        if (canReopen) {
-            actions.add("Reopen");
-        }
-        if (canComment) {
-            actions.add("Comment");
-        }
-
-        return actions.isEmpty() ? "-" : String.join(", ", actions);
-    }
-
-    private boolean hasRole(Account account, Role role) {
+    private boolean role(Account account, Role role) {
         return account != null && account.getRole() == role;
     }
 
-    private boolean sameAccount(Account a, Account b) {
-        if (a == null || b == null || a.getId() == null || b.getId() == null) {
-            return false;
-        }
-
-        return Objects.equals(a.getId(), b.getId());
+    private boolean same(Account a, Account b) {
+        return a != null && b != null && a.getId() != null && b.getId() != null && Objects.equals(a.getId(), b.getId());
     }
 
-    private void setDisabled(Button button, boolean disabled) {
-        if (button != null) {
-            button.setDisable(disabled);
-        }
+    private void selectAssignee() {
+        if (issue.getAssignee() != null)
+            assigneeBox.getItems().stream().filter(account -> same(account, issue.getAssignee())).findFirst().ifPresent(assigneeBox::setValue);
     }
 
-    private String formatComment(Comment comment) {
-        if (comment == null) {
-            return "-";
-        }
-
-        String date = "-";
-
-        if (comment.getCreatedDate() != null) {
-            date = comment.getCreatedDate().toLocalDate().toString();
-        }
-
-        return "[" + date + "] "
-                + UiFormat.username(comment.getAuthor())
-                + ": "
-                + safe(comment.getContent());
+    private String commentText(Comment comment) {
+        String date = comment == null || comment.getCreatedDate() == null ? "-" : comment.getCreatedDate().toLocalDate().toString();
+        return "[" + date + "] " + UiFormat.username(comment == null ? null : comment.getAuthor()) + ": " + safe(comment == null ? null : comment.getContent());
     }
 
-    private String safe(String value) {
-        return value == null || value.isBlank() ? "-" : value;
+    private void setDetail(String t, String d, String s, String p, String r, String a, String f) {
+        title.setText(t);
+        description.setText(d);
+        status.setText(s);
+        priority.setText(p);
+        reporter.setText(r);
+        assignee.setText(a);
+        fixer.setText(f);
     }
 
-    private VBox field(String labelText, javafx.scene.Node content) {
-        Label label = new Label(labelText);
-        label.getStyleClass().add("field-label");
+    private String safe(String text) {
+        return text == null || text.isBlank() ? "-" : text;
+    }
 
-        VBox box = new VBox(5, label, content);
+    private String name(Enum<?> value) {
+        return value == null ? "-" : value.name();
+    }
+
+    private Button button(String text, String style, javafx.event.EventHandler<javafx.event.ActionEvent> action) {
+        Button button = new Button(text);
+        button.getStyleClass().add(style);
+        button.setOnAction(action);
+        return button;
+    }
+
+    private static Label label(String text, String style) {
+        Label label = new Label(text);
+        label.getStyleClass().add(style);
+        return label;
+    }
+
+    private static Label detail(String text, String style) {
+        Label label = label(text, style);
+        label.setWrapText(true);
+        return label;
+    }
+
+    private VBox field(String name, Node content) {
+        VBox box = new VBox(5, label(name, "detail-label"), content);
         VBox.setVgrow(content, Priority.NEVER);
-
         return box;
     }
 
-    private void showMessage(String text, boolean error) {
+    private ListView<String> list(ObservableList<String> items, int height) {
+        ListView<String> list = new ListView<>(items);
+        list.getStyleClass().add("data-list");
+        list.setPrefHeight(height);
+        return list;
+    }
+
+    private javafx.util.StringConverter<Account> accountConverter() {
+        return new javafx.util.StringConverter<>() {
+            public String toString(Account account) { return UiFormat.account(account); }
+            public Account fromString(String string) { return null; }
+        };
+    }
+
+    private void show(String text, boolean error) {
         message.setText(text);
         message.getStyleClass().removeAll("error-text", "success-text");
         message.getStyleClass().add(error ? "error-text" : "success-text");
+    }
+
+    @FunctionalInterface
+    private interface IssueAction {
+        void apply(Long issueId, Account user);
     }
 }
