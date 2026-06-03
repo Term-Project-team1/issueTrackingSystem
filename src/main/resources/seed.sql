@@ -20,5 +20,3 @@ INSERT OR IGNORE INTO account(username, role) VALUES ('tester3', 'TESTER');
 INSERT OR IGNORE INTO account(username, role) VALUES ('tester4', 'TESTER');
 INSERT OR IGNORE INTO account(username, role) VALUES ('tester5', 'TESTER');
 
-INSERT OR IGNORE INTO project(name, created_date)
-VALUES ('project1', datetime('now'));
