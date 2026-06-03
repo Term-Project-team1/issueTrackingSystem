@@ -25,6 +25,13 @@ application {
     mainClass = 'issuetracker.ui.javafx.MainApp'
 }
 
+tasks.register('runSwing', JavaExec) {
+    group = 'application'
+    description = 'Run Swing UI'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'issuetracker.ui.swing.SwingMainApp'
+}
+
 test {
     useJUnitPlatform()
 }
